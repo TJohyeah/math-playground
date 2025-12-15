@@ -34,24 +34,21 @@
             justify-content: center; flex: 1; width: 100%; padding: 20px;
         }
 
-        /* 캔버스 (좌표평면) */
+        /* [수정 1] 캔버스 래퍼 CSS 단순화 */
         .canvas-wrapper {
             background: white; border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             padding: 10px; margin-bottom: 20px;
-            /* 캔버스 크기 강제 고정 (레이아웃 틀어짐 방지) */
-            width: 340px; 
-            height: 340px;
-            display: flex; justify-content: center; align-items: center;
+            /* flex 관련 속성 제거 */
         }
         
+        /* [수정 2] 캔버스 자체 중앙 정렬 */
         canvas { 
-            /* 테두리와 배경 */
             border: 1px solid #ddd; 
             background-color: #fff; 
-            /* 중요: CSS로 보이는 크기를 명확히 지정 */
-            width: 340px; 
-            height: 340px;
+            display: block; /* 블록 요소로 변경 */
+            margin: 0 auto; /* 중앙 정렬 */
+            /* 크기는 JS에서 제어하므로 CSS에서는 제거 */
         }
 
         /* 입력 컨트롤 */
@@ -131,19 +128,19 @@
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
     
-    // [해결 2] 고해상도(Retina) 지원: 픽셀 밀도에 맞춰 캔버스 내부 크기 뻥튀기
+    // [고해상도 지원 설정]
     const LOGICAL_SIZE = 340; // 우리 눈에 보이는 크기
-    const dpr = window.devicePixelRatio || 1; // 기기 배율 (보통 2 이상)
+    const dpr = window.devicePixelRatio || 1; // 기기 배율
     
-    // 캔버스의 '실제 픽셀 수'를 늘림
+    // 1. 물리적 픽셀 수 늘리기 (선명도 확보)
     canvas.width = LOGICAL_SIZE * dpr;
     canvas.height = LOGICAL_SIZE * dpr;
     
-    // 캔버스의 '화면 표시 크기'는 고정
+    // 2. 화면 표시 크기 고정 (레이아웃 유지)
     canvas.style.width = LOGICAL_SIZE + 'px';
     canvas.style.height = LOGICAL_SIZE + 'px';
 
-    // 그리기 도구의 배율을 조정해서, 우리가 좌표를 1만큼 이동해도 실제로는 dpr만큼 이동하게 함
+    // 3. 그리기 좌표계 확대
     ctx.scale(dpr, dpr);
     
     // 설정값
@@ -155,10 +152,142 @@
     let targetY = 0;
     let score = 0;
     let streak = 0;
-    
-    // [해결 1] 중복 정답 방지를 위한 상태 변수
     let isGameActive = true; 
 
     // 1. 문제 생성
     function generateProblem() {
         do {
+            targetX = Math.floor(Math.random() * (RANGE * 2 + 1)) - RANGE;
+            targetY = Math.floor(Math.random() * (RANGE * 2 + 1)) - RANGE;
+        } while (targetX === 0 && targetY === 0);
+
+        document.getElementById('inputX').value = '';
+        document.getElementById('inputY').value = '';
+        isGameActive = true;
+        document.getElementById('inputX').focus();
+
+        drawGraph();
+    }
+
+    // 2. 그래프 그리기
+    function drawGraph() {
+        // 캔버스 지우기 (안전하게 전체 물리 픽셀을 지움)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // [배경 그리드]
+        ctx.strokeStyle = '#eee'; 
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i = 0; i <= RANGE * 2 + 2; i++) {
+            let pos = i * GRID_SIZE;
+            ctx.moveTo(pos, 0); ctx.lineTo(pos, LOGICAL_SIZE);
+            ctx.moveTo(0, pos); ctx.lineTo(LOGICAL_SIZE, pos);
+        }
+        ctx.stroke();
+
+        // [축 그리기]
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        
+        // x축
+        ctx.moveTo(0, CENTER); ctx.lineTo(LOGICAL_SIZE, CENTER);
+        ctx.moveTo(LOGICAL_SIZE, CENTER);
+        ctx.lineTo(LOGICAL_SIZE - 10, CENTER - 5);
+        ctx.lineTo(LOGICAL_SIZE - 10, CENTER + 5);
+        ctx.fill();
+
+        // y축
+        ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, LOGICAL_SIZE);
+        ctx.moveTo(CENTER, 0);
+        ctx.lineTo(CENTER - 5, 10);
+        ctx.lineTo(CENTER + 5, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // [텍스트 설정]
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // 원점 O
+        ctx.font = 'italic bold 16px "Times New Roman", serif';
+        ctx.fillText("O", CENTER - 12, CENTER + 12);
+
+        // 축 이름
+        ctx.font = 'italic bold 18px "Times New Roman", serif';
+        ctx.fillText("x", LOGICAL_SIZE - 10, CENTER - 18); 
+        ctx.fillText("y", CENTER + 18, 15);
+
+        // 숫자 눈금
+        ctx.font = '12px Arial';
+        
+        // x축 눈금
+        for (let i = -10; i <= 10; i+=5) {
+            if (i === 0) continue;
+            let xPos = CENTER + (i * GRID_SIZE);
+            ctx.fillText(i, xPos, CENTER + 16); 
+            ctx.beginPath(); ctx.moveTo(xPos, CENTER - 3); ctx.lineTo(xPos, CENTER + 3); ctx.stroke();
+        }
+
+        // y축 눈금
+        for (let i = -10; i <= 10; i+=5) {
+            if (i === 0) continue;
+            let yPos = CENTER - (i * GRID_SIZE);
+            ctx.textAlign = 'right';
+            ctx.fillText(i, CENTER - 8, yPos);
+            ctx.textAlign = 'center';
+            ctx.beginPath(); ctx.moveTo(CENTER - 3, yPos); ctx.lineTo(CENTER + 3, yPos); ctx.stroke();
+        }
+
+        // [문제의 점 찍기]
+        const pointPixelX = CENTER + (targetX * GRID_SIZE);
+        const pointPixelY = CENTER - (targetY * GRID_SIZE);
+
+        ctx.fillStyle = '#e74c3c'; 
+        ctx.beginPath();
+        ctx.arc(pointPixelX, pointPixelY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    // 3. 정답 확인
+    function checkAnswer() {
+        if (!isGameActive) return;
+
+        const userX = parseInt(document.getElementById('inputX').value);
+        const userY = parseInt(document.getElementById('inputY').value);
+
+        if (isNaN(userX) || isNaN(userY)) {
+            alert("좌표를 입력해주세요!");
+            return;
+        }
+
+        const modal = document.getElementById('resultModal');
+        const title = document.getElementById('modalTitle');
+        const msg = document.getElementById('modalMsg');
+        const btn = document.querySelector('.modal-btn');
+
+        if (userX === targetX && userY === targetY) {
+            isGameActive = false; 
+            score++;
+            streak++;
+            title.innerText = "정답입니다! 🎉";
+            title.style.color = "#27ae60";
+            msg.innerText = `정확해요! (${targetX}, ${targetY})`;
+            btn.innerText = "다음 문제";
+            btn.onclick = () => { closeModal(); generateProblem(); };
+        } else {
+            streak = 0;
+            title.innerText = "틀렸습니다 😢";
+            title.style.color = "#c0392b";
+            msg.innerText = "다시 한번 그래프를 잘 살펴보세요.";
+            btn.innerText = "다시 시도";
+            btn.onclick = () => { closeModal(); };
+        }
+
+        updateScore();
+        modal.style.display = 'flex';

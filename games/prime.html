@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소수 사냥꾼 | Prime Hunter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 배경 및 공통 설정 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 30%, #a1c4fd, #c2e9fb);
+            touch-action: none; user-select: none;
+            height: 100vh;
+        }
+
+        /* 2. 화면 관리 */
+        .screen { display: none; width: 100%; height: 100%; position: absolute; top:0; left:0; }
+        .active { display: flex; flex-direction: column; }
+
+        /* === 메뉴 === */
+        #menuScreen {
+            background: rgba(108, 92, 231, 0.9);
+            justify-content: center; align-items: center; text-align: center;
+            z-index: 200; backdrop-filter: blur(5px);
+        }
+        #menuScreen h1 {
+            font-size: 3.5rem; color: white; margin-bottom: 10px;
+            text-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        #menuScreen p { color: #dfe6e9; font-size: 1.2rem; margin-bottom: 40px; }
+        
+        .mode-btn {
+            display: block; width: 280px; padding: 18px; margin: 15px auto;
+            font-size: 1.4rem; border: none; border-radius: 50px; cursor: pointer;
+            font-family: 'Jua'; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s; color: white;
+        }
+        .mode-btn:active { transform: scale(0.95); }
+        .btn-tuto { background: #fab1a0; color: #2d3436; }
+        .btn-easy { background: #00b894; }
+        .btn-hard { background: #d63031; }
+
+        /* === 게임 UI === */
+        #gameScreen { z-index: 100; }
+        .ui-bar {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+            box-sizing: border-box; z-index: 10; pointer-events: none;
+        }
+        .home-btn {
+            pointer-events: auto; background: white; border: 2px solid #333;
+            padding: 8px 15px; border-radius: 20px;
+            font-family: 'Jua'; font-size: 1rem; cursor: pointer;
+            text-decoration: none; color: #333; box-shadow: 0 3px 0 #ccc;
+        }
+        .score-box { font-size: 1.8rem; color: #2d3436; text-shadow: 2px 2px 0 white; }
+        .lives { font-size: 1.8rem; letter-spacing: 2px; }
+        canvas { display: block; }
+
+        /* === 모달 === */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none; justify-content: center; align-items: center;
+            z-index: 300;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 20px;
+            text-align: center; border: 4px solid #74b9ff; width: 320px;
+            animation: popIn 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* 버튼 스타일들 */
+        .restart-btn {
+            background: #e55039; color: white; border: none;
+            padding: 12px 30px; font-size: 1.3rem; border-radius: 30px;
+            cursor: pointer; font-family: 'Jua'; margin-top: 20px;
+            box-shadow: 0 4px 0 #b71540; margin: 10px;
+        }
+        .restart-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        .menu-btn {
+            background: #636e72; color: white; border: none;
+            padding: 12px 30px; font-size: 1.3rem; border-radius: 30px;
+            cursor: pointer; font-family: 'Jua'; margin-top: 10px;
+            box-shadow: 0 4px 0 #2d3436;
+        }
+        .menu-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .tuto-text { font-size: 1.1rem; line-height: 1.6; color: #555; text-align: left; margin: 15px 0; }
+        .tuto-highlight { color: #d63031; font-weight: bold; background: #ffeaa7; padding: 0 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="menuScreen" class="screen active">
+        <h1>💎 소수 사냥꾼</h1>
+        <p>떨어지는 <b>소수 보석</b>을 모아라!</p>
+        
+        <button class="mode-btn btn-tuto" onclick="selectMode('tutorial')">🐣 튜토리얼 (연습)</button>
+        <button class="mode-btn btn-easy" onclick="selectMode('easy')">🏫 쉬운 모드 (1~70)</button>
+        <button class="mode-btn btn-hard" onclick="selectMode('challenge')">🔥 챌린지 (1~150)</button>
+        <br>
+        <a href="../../index.html" style="color:white; text-decoration:underline; font-size:0.9rem;">🏠 홈페이지로 돌아가기</a>
+    </div>
+
+    <div id="gameScreen" class="screen">
+        <div class="ui-bar">
+            <button class="home-btn" onclick="goToMenu()">🔙 메뉴</button>
+            <div class="score-box">점수: <span id="score">0</span></div>
+            <div class="lives">❤️❤️❤️</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div class="modal" id="tutorialModal">
+        <div class="modal-content">
+            <h2 style="color:#0984e3; margin-top:0;">📖 게임 방법</h2>
+            <div class="tuto-text">
+                1. 하늘에서 <b>파란 보석</b>들이 떨어집니다.<br>
+                2. <span class="tuto-highlight">소수(Prime Number)</span>만 터치하세요!<br>
+                <br>
+                💡 <b>소수란?</b><br>
+                1과 자기 자신만으로 나누어 떨어지는 수 (예: 2, 3, 5, 7...)<br>
+                <br>
+                ⚠️ <b>주의!</b><br>
+                합성수(오답)를 누르면 <span class="tuto-highlight">목숨이 줄어듭니다!</span>
+            </div>
+            <button class="restart-btn" style="background:#0984e3; box-shadow: 0 4px 0 #065a99;" onclick="closeTutorialAndStart()">게임 시작!</button>
+        </div>
+    </div>
+
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h1 style="color: #e55039; font-size: 2.2rem; margin:0;">게임 종료</h1>
+            <p id="resultText" style="font-size: 1.1rem; color:#555; margin-top:10px;"></p>
+            <div style="font-size: 2rem; font-weight: bold; margin: 20px 0; color:#2d3436;">
+                최종 점수: <span id="finalScore">0</span>
+            </div>
+            <button class="restart-btn" onclick="restartGame()">다시 도전</button>
+            <button class="menu-btn" onclick="goToMenu()">메뉴로</button>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 화면 크기 대응
+    let w, h;
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 게임 상태 변수
+    let score = 0;
+    let lives = 3;
+    let isPlaying = false;
+    let gameLoopId;
+    let frameCount = 0;
+    let items = [];
+    let particles = [];
+    
+    // 난이도 설정 변수 (현재 모드 기억용)
+    let currentMode = 'easy';
+    let maxNumber = 50;
+    let baseSpeed = 2;
+    let spawnRate = 60;
+    let speedMultiplier = 1;
+
+    // 모드 선택
+    function selectMode(mode) {
+        currentMode = mode; // 선택된 모드 저장
+        document.getElementById('menuScreen').classList.remove('active');
+        document.getElementById('gameScreen').classList.add('active');
+        if (mode === 'tutorial') {
+            document.getElementById('tutorialModal').style.display = 'flex';
+        } else {
+            realStartGame();
+        }
+    }
+
+    function closeTutorialAndStart() {
+        document.getElementById('tutorialModal').style.display = 'none';
+        realStartGame();
+    }
+
+    // [NEW] 재시작 함수: 현재 모드로 바로 시작
+    function restartGame() {
+        document.getElementById('gameOverModal').style.display = 'none';
+        realStartGame();
+    }
+
+    // 게임 초기화 및 시작
+    function realStartGame() {
+        // 저장된 currentMode에 따라 난이도 재설정
+        if (currentMode === 'tutorial') { 
+            maxNumber = 30; baseSpeed = 1.5; spawnRate = 80; lives = 3;
+        } else if (currentMode === 'easy') { 
+            maxNumber = 70; baseSpeed = 2.5; spawnRate = 60; lives = 3;
+        } else if (currentMode === 'challenge') { 
+            maxNumber = 150; baseSpeed = 4.0; spawnRate = 45; lives = 5; 
+        }
+
+        score = 0; 
+        frameCount = 0; 
+        speedMultiplier = 1;
+        items = []; 
+        particles = []; 
+        updateUI(); 
+        isPlaying = true; 
+        animate();
+    }
+
+    function goToMenu() {
+        isPlaying = false; cancelAnimationFrame(gameLoopId);
+        document.getElementById('gameOverModal').style.display = 'none';
+        document.getElementById('tutorialModal').style.display = 'none';
+        document.getElementById('gameScreen').classList.remove('active');
+        document.getElementById('menuScreen').classList.add('active');
+    }
+
+    function isPrime(num) {
+        if (num <= 1) return false; if (num === 2) return true; if (num % 2 === 0) return false;
+        for (let i = 3; i <= Math.sqrt(num); i += 2) { if (num % i === 0) return false; }
+        return true;
+    }
+
+    class Item {
+        constructor() {
+            this.r = 45; 
+            this.x = Math.random() * (w - 2 * this.r) + this.r;
+            this.y = -60;
+            
+            if (Math.random() < 0.4) {
+                let num; do { num = Math.floor(Math.random() * maxNumber) + 1; } while (!isPrime(num));
+                this.val = num; this.isPrime = true;
+            } else {
+                let num; do { num = Math.floor(Math.random() * maxNumber) + 1; } while (isPrime(num));
+                this.val = num; this.isPrime = false;
+            }
+            
+            this.vy = (Math.random() * 0.5 + baseSpeed) * speedMultiplier;
+        }
+
+        update() { this.y += this.vy; }
+
+        draw() {
+            drawDiamond(ctx, this.x, this.y, this.r, '#74b9ff');
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 30px Jua';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
+            ctx.fillText(this.val, this.x, this.y);
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function drawDiamond(ctx, x, y, size, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        ctx.moveTo(0, -size); ctx.lineTo(size * 0.8, 0);
+        ctx.lineTo(0, size); ctx.lineTo(-size * 0.8, 0);
+        ctx.closePath();
+
+        let grad = ctx.createLinearGradient(-size, -size, size, size);
+        grad.addColorStop(0, '#a29bfe');
+        grad.addColorStop(0.5, '#0984e3');
+        grad.addColorStop(1, '#6c5ce7');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -size); ctx.lineTo(0, size);
+        ctx.moveTo(-size * 0.8, 0); ctx.lineTo(size * 0.8, 0);
+        ctx.moveTo(0, -size * 0.4); ctx.lineTo(size * 0.3, 0);
+        ctx.lineTo(0, size * 0.4); ctx.lineTo(-size * 0.3, 0);
+        ctx.closePath();
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -size); ctx.lineTo(size * 0.8, 0);
+        ctx.lineTo(0, size); ctx.lineTo(-size * 0.8, 0);
+        ctx.closePath();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random() - 0.5) * 12;
+            this.vy = (Math.random() - 0.5) * 12;
+            this.life = 1.0; this.color = color;
+            this.size = Math.random() * 6 + 3;
+        }
+        update() { 
+            this.x += this.vx; this.y += this.vy; 
+            this.vy += 0.3; 
+            this.life -= 0.04; 
+        }
+        draw() {
+            ctx.globalAlpha = this.life; ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y - this.size); 
+            ctx.lineTo(this.x + this.size, this.y); 
+            ctx.lineTo(this.x, this.y + this.size); 
+            ctx.lineTo(this.x - this.size, this.y);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    function animate() {
+        if (!isPlaying) return;
+        ctx.clearRect(0, 0, w, h);
+        frameCount++;
+
+        speedMultiplier = 1 + (score / 150) + (frameCount / 4000);
+        let adjustedSpawnRate = Math.max(20, Math.floor(spawnRate / speedMultiplier));
+        if (frameCount % adjustedSpawnRate === 0) items.push(new Item());
+
+        for (let i = items.length - 1; i >= 0; i--) {
+            let p = items[i]; p.update(); p.draw();
+
+            if (p.y - p.r * 1.5 > h) { 
+                if (p.isPrime) { 
+                    lives--; updateUI(); 
+                    if (lives <= 0) gameOver(); 
+                }
+                items.splice(i, 1);
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update(); particles[i].draw();
+            if (particles[i].life <= 0) particles.splice(i, 1);
+        }
+        gameLoopId = requestAnimationFrame(animate);
+    }
+
+    function handleInput(e) {
+        if (!isPlaying) return;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+
+        for (let i = items.length - 1; i >= 0; i--) {
+            let p = items[i];
+            const dist = Math.hypot(p.x - cx, p.y - cy);
+            
+            if (dist < p.r + 20) { 
+                if (p.isPrime) {
+                    let points = (currentMode === 'challenge') ? 20 : 10;
+                    score += points;
+                    for(let k=0; k<12; k++) particles.push(new Particle(p.x, p.y, '#ffd700')); 
+                } else {
+                    score = Math.max(0, score - 5);
+                    lives--; 
+                    if (lives <= 0) {
+                        updateUI();
+                        gameOver();
+                        return;
+                    }
+                    for(let k=0; k<12; k++) particles.push(new Particle(p.x, p.y, '#ff6b6b')); 
+                    canvas.style.transform = 'translate(5px, 5px)';
+                    setTimeout(() => canvas.style.transform = 'none', 50);
+                }
+                updateUI(); items.splice(i, 1); return; 
+            }
+        }
+    }
+
+    window.addEventListener('mousedown', handleInput);
+    window.addEventListener('touchstart', handleInput, {passive: false});
+
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        let heartStr = "";
+        for(let i=0; i<lives; i++) heartStr += "❤️";
+        let maxLives = (currentMode === 'challenge') ? 5 : 3;
+        for(let i=lives; i<maxLives; i++) heartStr += "🤍";
+        document.querySelector('.lives').innerHTML = heartStr;
+    }
+
+    function gameOver() {
+        isPlaying = false; cancelAnimationFrame(gameLoopId);
+        document.getElementById('finalScore').innerText = score;
+        let msg = "수고하셨습니다!";
+        if(score > 300) msg = "훌륭한 사냥꾼이군요!";
+        if(score > 700) msg = "전설의 보석 마스터! 🏆";
+        document.getElementById('resultText').innerText = msg;
+        document.getElementById('gameOverModal').style.display = 'flex';
+    }
+</script>
+</body>
+</html>

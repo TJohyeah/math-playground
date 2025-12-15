@@ -40,7 +40,14 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             padding: 10px; margin-bottom: 20px;
         }
-        canvas { border: 1px solid #ddd; background-color: #fff; }
+        /* 캔버스 스타일: 화면에 보이는 크기 고정 */
+        canvas { 
+            border: 1px solid #ddd; 
+            background-color: #fff; 
+            width: 340px; 
+            height: 340px;
+            display: block; 
+        }
 
         /* 입력 컨트롤 */
         .control-panel {
@@ -84,7 +91,7 @@
 <body>
 
     <header>
-        <button class="home-btn" onclick="location.href='../../index.html'">🏠 홈</button>
+        <button class="home-btn" onclick="location.href='../index.html'">🏠 홈</button>
         <h1>📍 좌표를 찾아라!</h1>
     </header>
 
@@ -94,7 +101,7 @@
         </div>
 
         <div class="canvas-wrapper">
-            <canvas id="graphCanvas" width="340" height="340"></canvas>
+            <canvas id="graphCanvas"></canvas>
         </div>
 
         <div class="control-panel">
@@ -119,10 +126,23 @@
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
     
+    // [수정] 고해상도(Retina) 지원을 위한 캔버스 크기 보정
+    const LOGICAL_SIZE = 340; // 화면에 보이는 크기
+    const dpr = window.devicePixelRatio || 1;
+    
+    canvas.width = LOGICAL_SIZE * dpr;
+    canvas.height = LOGICAL_SIZE * dpr;
+    
+    canvas.style.width = LOGICAL_SIZE + 'px';
+    canvas.style.height = LOGICAL_SIZE + 'px';
+
+    // 좌표계 스케일 조정 (모든 그림을 dpr만큼 확대해서 그리기)
+    ctx.scale(dpr, dpr);
+    
     // 설정값
-    const RANGE = 10; // -10 ~ 10 범위
-    const GRID_SIZE = canvas.width / (RANGE * 2 + 2); // 격자 한 칸 크기
-    const CENTER = canvas.width / 2;
+    const RANGE = 10; 
+    const GRID_SIZE = LOGICAL_SIZE / (RANGE * 2 + 2); 
+    const CENTER = LOGICAL_SIZE / 2;
     
     let targetX = 0;
     let targetY = 0;
@@ -143,69 +163,69 @@
         drawGraph();
     }
 
-    // 2. 그래프 그리기 (개선됨)
+    // 2. 그래프 그리기
     function drawGraph() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
 
-        // [배경 그리드] 연하게
+        // [배경 그리드]
         ctx.strokeStyle = '#f0f0f0'; 
         ctx.lineWidth = 1;
         ctx.beginPath();
         for(let i = 0; i <= RANGE * 2 + 2; i++) {
             let pos = i * GRID_SIZE;
-            ctx.moveTo(pos, 0); ctx.lineTo(pos, canvas.height);
-            ctx.moveTo(0, pos); ctx.lineTo(canvas.width, pos);
+            ctx.moveTo(pos, 0); ctx.lineTo(pos, LOGICAL_SIZE);
+            ctx.moveTo(0, pos); ctx.lineTo(LOGICAL_SIZE, pos);
         }
         ctx.stroke();
 
-        // [축 그리기] 진하게 + 화살표
+        // [축 그리기]
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 2;
-        ctx.fillStyle = '#333'; // 화살표 채우기 색
+        ctx.fillStyle = '#333';
         ctx.beginPath();
         
-        // x축 (가로)
+        // x축
         ctx.moveTo(0, CENTER); 
-        ctx.lineTo(canvas.width, CENTER);
-        // x축 화살표 (오른쪽 끝)
-        ctx.moveTo(canvas.width, CENTER);
-        ctx.lineTo(canvas.width - 10, CENTER - 5);
-        ctx.lineTo(canvas.width - 10, CENTER + 5);
+        ctx.lineTo(LOGICAL_SIZE, CENTER);
+        // x축 화살표
+        ctx.moveTo(LOGICAL_SIZE, CENTER);
+        ctx.lineTo(LOGICAL_SIZE - 10, CENTER - 5);
+        ctx.lineTo(LOGICAL_SIZE - 10, CENTER + 5);
         ctx.fill();
 
-        // y축 (세로)
+        // y축
         ctx.moveTo(CENTER, 0); 
-        ctx.lineTo(CENTER, canvas.height);
-        // y축 화살표 (위쪽 끝)
+        ctx.lineTo(CENTER, LOGICAL_SIZE);
+        // y축 화살표
         ctx.moveTo(CENTER, 0);
         ctx.lineTo(CENTER - 5, 10);
         ctx.lineTo(CENTER + 5, 10);
         ctx.fill();
         ctx.stroke();
 
-        // [텍스트 표시] 로마자, 숫자 5단위
+        // [텍스트 표시]
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // (1) 원점 O 표시 (숫자 0 대신 알파벳 O)
-        ctx.font = 'italic bold 16px "Times New Roman", serif'; // 로마자(이탤릭 아님)
-        ctx.fillText("O", CENTER - 12, CENTER + 12); // 왼쪽 아래에 살짝
+        // (1) 원점 O
+        ctx.font = 'italic bold 16px "Times New Roman", serif';
+        ctx.fillText("O", CENTER - 12, CENTER + 12);
 
-        // (2) 축 이름 (x, y) - 이탤릭체
+        // (2) 축 이름 (x 표시 위치 수정됨: 축 위로)
         ctx.font = 'italic bold 18px "Times New Roman", serif';
-        ctx.fillText("x", canvas.width - 15, CENTER + 18);
+        ctx.fillText("x", LOGICAL_SIZE - 10, CENTER - 15); 
         ctx.fillText("y", CENTER + 15, 15);
 
-        // (3) 숫자 눈금 (5단위) - 정자체
+        // (3) 숫자 눈금 (5단위)
         ctx.font = '12px Arial';
         
         // x축 눈금 (-10, -5, 5, 10)
         for (let i = -10; i <= 10; i+=5) {
-            if (i === 0) continue; // 0은 O로 대체했으므로 생략
+            if (i === 0) continue;
             let xPos = CENTER + (i * GRID_SIZE);
-            ctx.fillText(i, xPos, CENTER + 15); // 축 아래에 표시
-            // 눈금선 살짝
+            ctx.fillText(i, xPos, CENTER + 15); 
+            
             ctx.beginPath();
             ctx.moveTo(xPos, CENTER - 3);
             ctx.lineTo(xPos, CENTER + 3);
@@ -216,10 +236,10 @@
         for (let i = -10; i <= 10; i+=5) {
             if (i === 0) continue;
             let yPos = CENTER - (i * GRID_SIZE);
-            ctx.textAlign = 'right'; // y축은 숫자 오른쪽 정렬
-            ctx.fillText(i, CENTER - 8, yPos); // 축 왼쪽에 표시
-            ctx.textAlign = 'center'; // 다시 중앙 정렬로 복구
-             // 눈금선 살짝
+            ctx.textAlign = 'right';
+            ctx.fillText(i, CENTER - 8, yPos);
+            ctx.textAlign = 'center';
+            
             ctx.beginPath();
             ctx.moveTo(CENTER - 3, yPos);
             ctx.lineTo(CENTER + 3, yPos);
@@ -230,11 +250,10 @@
         const pointPixelX = CENTER + (targetX * GRID_SIZE);
         const pointPixelY = CENTER - (targetY * GRID_SIZE);
 
-        ctx.fillStyle = '#e74c3c'; // 빨간색
+        ctx.fillStyle = '#e74c3c'; 
         ctx.beginPath();
         ctx.arc(pointPixelX, pointPixelY, 6, 0, Math.PI * 2);
         ctx.fill();
-        // 점 테두리 (가시성 확보)
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -242,6 +261,10 @@
 
     // 3. 정답 확인
     function checkAnswer() {
+        // [수정] 점수 중복 상승 방지
+        const modal = document.getElementById('resultModal');
+        if (modal.style.display === 'flex') return;
+
         const userX = parseInt(document.getElementById('inputX').value);
         const userY = parseInt(document.getElementById('inputY').value);
 
@@ -250,7 +273,6 @@
             return;
         }
 
-        const modal = document.getElementById('resultModal');
         const title = document.getElementById('modalTitle');
         const msg = document.getElementById('modalMsg');
         const btn = document.querySelector('.modal-btn');

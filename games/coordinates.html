@@ -34,21 +34,21 @@
             justify-content: center; flex: 1; width: 100%; padding: 20px;
         }
 
-        /* [수정 1] 캔버스 래퍼 CSS 단순화 */
+        /* 캔버스 상자 */
         .canvas-wrapper {
             background: white; border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             padding: 10px; margin-bottom: 20px;
-            /* flex 관련 속성 제거 */
+            display: flex; justify-content: center; align-items: center;
         }
         
-        /* [수정 2] 캔버스 자체 중앙 정렬 */
+        /* 캔버스 스타일 (중요: 물리적 크기는 680이지만, 눈에는 340으로 보임 -> 2배 선명) */
         canvas { 
             border: 1px solid #ddd; 
             background-color: #fff; 
-            display: block; /* 블록 요소로 변경 */
-            margin: 0 auto; /* 중앙 정렬 */
-            /* 크기는 JS에서 제어하므로 CSS에서는 제거 */
+            width: 340px;   /* 화면 표시 너비 */
+            height: 340px;  /* 화면 표시 높이 */
+            display: block;
         }
 
         /* 입력 컨트롤 */
@@ -87,7 +87,6 @@
         .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; }
         .modal-content h2 { margin-top: 0; }
         .modal-btn { background-color: #4a69bd; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Jua'; font-size: 1.2rem; }
-
     </style>
 </head>
 <body>
@@ -103,7 +102,7 @@
         </div>
 
         <div class="canvas-wrapper">
-            <canvas id="graphCanvas"></canvas>
+            <canvas id="graphCanvas" width="680" height="680"></canvas>
         </div>
 
         <div class="control-panel">
@@ -127,23 +126,12 @@
 <script>
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
-    
-    // [고해상도 지원 설정]
-    const LOGICAL_SIZE = 340; // 우리 눈에 보이는 크기
-    const dpr = window.devicePixelRatio || 1; // 기기 배율
-    
-    // 1. 물리적 픽셀 수 늘리기 (선명도 확보)
-    canvas.width = LOGICAL_SIZE * dpr;
-    canvas.height = LOGICAL_SIZE * dpr;
-    
-    // 2. 화면 표시 크기 고정 (레이아웃 유지)
-    canvas.style.width = LOGICAL_SIZE + 'px';
-    canvas.style.height = LOGICAL_SIZE + 'px';
 
-    // 3. 그리기 좌표계 확대
-    ctx.scale(dpr, dpr);
-    
-    // 설정값
+    // [설정] 2배율 적용 (선명하게 그리기 위함)
+    const LOGICAL_SIZE = 340; 
+    ctx.scale(2, 2); // 모든 그림을 2배로 뻥튀기해서 그림 (680px 캔버스에 꽉 차게)
+
+    // 게임 변수
     const RANGE = 10; 
     const GRID_SIZE = LOGICAL_SIZE / (RANGE * 2 + 2); 
     const CENTER = LOGICAL_SIZE / 2;
@@ -171,8 +159,8 @@
 
     // 2. 그래프 그리기
     function drawGraph() {
-        // 캔버스 지우기 (안전하게 전체 물리 픽셀을 지움)
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 전체 지우기 (논리 좌표 340x340 지우면 -> 실제 680x680 지워짐)
+        ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
 
         // [배경 그리드]
         ctx.strokeStyle = '#eee'; 
@@ -191,14 +179,14 @@
         ctx.fillStyle = '#333';
         ctx.beginPath();
         
-        // x축
+        // x축 (가로)
         ctx.moveTo(0, CENTER); ctx.lineTo(LOGICAL_SIZE, CENTER);
         ctx.moveTo(LOGICAL_SIZE, CENTER);
         ctx.lineTo(LOGICAL_SIZE - 10, CENTER - 5);
         ctx.lineTo(LOGICAL_SIZE - 10, CENTER + 5);
         ctx.fill();
 
-        // y축
+        // y축 (세로)
         ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, LOGICAL_SIZE);
         ctx.moveTo(CENTER, 0);
         ctx.lineTo(CENTER - 5, 10);
@@ -215,12 +203,12 @@
         ctx.font = 'italic bold 16px "Times New Roman", serif';
         ctx.fillText("O", CENTER - 12, CENTER + 12);
 
-        // 축 이름
+        // 축 이름 (위치 조정됨)
         ctx.font = 'italic bold 18px "Times New Roman", serif';
         ctx.fillText("x", LOGICAL_SIZE - 10, CENTER - 18); 
         ctx.fillText("y", CENTER + 18, 15);
 
-        // 숫자 눈금
+        // 숫자 눈금 (5단위)
         ctx.font = '12px Arial';
         
         // x축 눈금
@@ -256,7 +244,7 @@
 
     // 3. 정답 확인
     function checkAnswer() {
-        if (!isGameActive) return;
+        if (!isGameActive) return; // 중복 정답 방지
 
         const userX = parseInt(document.getElementById('inputX').value);
         const userY = parseInt(document.getElementById('inputY').value);
@@ -272,7 +260,7 @@
         const btn = document.querySelector('.modal-btn');
 
         if (userX === targetX && userY === targetY) {
-            isGameActive = false; 
+            isGameActive = false; // 상태 잠금
             score++;
             streak++;
             title.innerText = "정답입니다! 🎉";
@@ -291,3 +279,37 @@
 
         updateScore();
         modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = 'none';
+        if (isGameActive) {
+            document.getElementById('inputX').focus();
+        }
+    }
+
+    function updateScore() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('streak').innerText = streak;
+    }
+
+    // 엔터키 처리
+    document.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            const modal = document.getElementById('resultModal');
+            if (modal.style.display === 'flex') {
+                const btn = document.querySelector('.modal-btn');
+                btn.click();
+            } else {
+                checkAnswer();
+            }
+        }
+    });
+
+    // 시작
+    generateProblem();
+
+</script>
+
+</body>
+</html>

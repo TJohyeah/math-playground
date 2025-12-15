@@ -131,13 +131,11 @@
 
     // 1. 문제 생성
     function generateProblem() {
-        // -10 ~ 10 사이의 랜덤 정수 (0은 제외하는 게 좋음)
         do {
             targetX = Math.floor(Math.random() * (RANGE * 2 + 1)) - RANGE;
             targetY = Math.floor(Math.random() * (RANGE * 2 + 1)) - RANGE;
-        } while (targetX === 0 && targetY === 0); // 원점 문제 방지 (원하면 삭제 가능)
+        } while (targetX === 0 && targetY === 0);
 
-        // 입력창 초기화
         document.getElementById('inputX').value = '';
         document.getElementById('inputY').value = '';
         document.getElementById('inputX').focus();
@@ -145,50 +143,101 @@
         drawGraph();
     }
 
-    // 2. 그래프 그리기
+    // 2. 그래프 그리기 (개선됨)
     function drawGraph() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 그리드 그리기
-        ctx.strokeStyle = '#e0e0e0'; // 연한 회색
+        // [배경 그리드] 연하게
+        ctx.strokeStyle = '#f0f0f0'; 
         ctx.lineWidth = 1;
         ctx.beginPath();
-        
-        // 세로선, 가로선
         for(let i = 0; i <= RANGE * 2 + 2; i++) {
             let pos = i * GRID_SIZE;
-            // 세로
             ctx.moveTo(pos, 0); ctx.lineTo(pos, canvas.height);
-            // 가로
             ctx.moveTo(0, pos); ctx.lineTo(canvas.width, pos);
         }
         ctx.stroke();
 
-        // 축 그리기 (x축, y축)
+        // [축 그리기] 진하게 + 화살표
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 2;
+        ctx.fillStyle = '#333'; // 화살표 채우기 색
         ctx.beginPath();
-        // x축
-        ctx.moveTo(0, CENTER); ctx.lineTo(canvas.width, CENTER);
-        // y축
-        ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, canvas.height);
+        
+        // x축 (가로)
+        ctx.moveTo(0, CENTER); 
+        ctx.lineTo(canvas.width, CENTER);
+        // x축 화살표 (오른쪽 끝)
+        ctx.moveTo(canvas.width, CENTER);
+        ctx.lineTo(canvas.width - 10, CENTER - 5);
+        ctx.lineTo(canvas.width - 10, CENTER + 5);
+        ctx.fill();
+
+        // y축 (세로)
+        ctx.moveTo(CENTER, 0); 
+        ctx.lineTo(CENTER, canvas.height);
+        // y축 화살표 (위쪽 끝)
+        ctx.moveTo(CENTER, 0);
+        ctx.lineTo(CENTER - 5, 10);
+        ctx.lineTo(CENTER + 5, 10);
+        ctx.fill();
         ctx.stroke();
 
-        // 화살표 그리기 (생략 가능하지만 디테일 추가)
-        ctx.font = '14px Arial';
+        // [텍스트 표시] 로마자, 숫자 5단위
         ctx.fillStyle = '#333';
-        ctx.fillText("x", canvas.width - 15, CENTER - 5);
-        ctx.fillText("y", CENTER + 5, 15);
-        ctx.fillText("0", CENTER + 5, CENTER + 15); // 원점
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // (1) 원점 O 표시 (숫자 0 대신 알파벳 O)
+        ctx.font = 'italic bold 16px "Times New Roman", serif'; // 로마자(이탤릭 아님)
+        ctx.fillText("O", CENTER - 12, CENTER + 12); // 왼쪽 아래에 살짝
 
-        // 빨간 점 찍기 (Target)
+        // (2) 축 이름 (x, y) - 이탤릭체
+        ctx.font = 'italic bold 18px "Times New Roman", serif';
+        ctx.fillText("x", canvas.width - 15, CENTER + 18);
+        ctx.fillText("y", CENTER + 15, 15);
+
+        // (3) 숫자 눈금 (5단위) - 정자체
+        ctx.font = '12px Arial';
+        
+        // x축 눈금 (-10, -5, 5, 10)
+        for (let i = -10; i <= 10; i+=5) {
+            if (i === 0) continue; // 0은 O로 대체했으므로 생략
+            let xPos = CENTER + (i * GRID_SIZE);
+            ctx.fillText(i, xPos, CENTER + 15); // 축 아래에 표시
+            // 눈금선 살짝
+            ctx.beginPath();
+            ctx.moveTo(xPos, CENTER - 3);
+            ctx.lineTo(xPos, CENTER + 3);
+            ctx.stroke();
+        }
+
+        // y축 눈금 (-10, -5, 5, 10)
+        for (let i = -10; i <= 10; i+=5) {
+            if (i === 0) continue;
+            let yPos = CENTER - (i * GRID_SIZE);
+            ctx.textAlign = 'right'; // y축은 숫자 오른쪽 정렬
+            ctx.fillText(i, CENTER - 8, yPos); // 축 왼쪽에 표시
+            ctx.textAlign = 'center'; // 다시 중앙 정렬로 복구
+             // 눈금선 살짝
+            ctx.beginPath();
+            ctx.moveTo(CENTER - 3, yPos);
+            ctx.lineTo(CENTER + 3, yPos);
+            ctx.stroke();
+        }
+
+        // [문제의 점 찍기]
         const pointPixelX = CENTER + (targetX * GRID_SIZE);
-        const pointPixelY = CENTER - (targetY * GRID_SIZE); // y축은 위로 갈수록 좌표값은 커지지만 픽셀은 작아짐
+        const pointPixelY = CENTER - (targetY * GRID_SIZE);
 
-        ctx.fillStyle = '#e74c3c';
+        ctx.fillStyle = '#e74c3c'; // 빨간색
         ctx.beginPath();
         ctx.arc(pointPixelX, pointPixelY, 6, 0, Math.PI * 2);
         ctx.fill();
+        // 점 테두리 (가시성 확보)
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
     }
 
     // 3. 정답 확인
@@ -220,7 +269,7 @@
             title.style.color = "#c0392b";
             msg.innerText = "다시 한번 그래프를 잘 살펴보세요.";
             btn.innerText = "다시 시도";
-            btn.onclick = () => { closeModal(); }; // 문제 유지
+            btn.onclick = () => { closeModal(); };
         }
 
         updateScore();
@@ -229,7 +278,6 @@
 
     function closeModal() {
         document.getElementById('resultModal').style.display = 'none';
-        // 다음 문제로 넘어갈 때 입력창으로 포커스
         if(document.querySelector('.modal-btn').innerText === "다음 문제") {
              document.getElementById('inputX').focus();
         }
@@ -240,12 +288,10 @@
         document.getElementById('streak').innerText = streak;
     }
 
-    // 엔터키 입력 지원
     document.getElementById('inputY').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') checkAnswer();
     });
 
-    // 시작
     generateProblem();
 
 </script>

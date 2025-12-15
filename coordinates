@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>좌표평면 보물찾기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background-color: #f0f4f8;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh;
+        }
+
+        /* 상단 헤더 */
+        header {
+            background-color: #343a40; color: white; width: 100%;
+            padding: 15px 0; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: relative;
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: transparent; border: 2px solid white; color: white;
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-family: 'Jua';
+        }
+        .home-btn:hover { background: white; color: #333; }
+        h1 { margin: 0; font-size: 1.5rem; }
+
+        /* 메인 컨텐츠 */
+        .container {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; flex: 1; width: 100%; padding: 20px;
+        }
+
+        /* 캔버스 (좌표평면) */
+        .canvas-wrapper {
+            background: white; border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 10px; margin-bottom: 20px;
+        }
+        canvas { border: 1px solid #ddd; background-color: #fff; }
+
+        /* 입력 컨트롤 */
+        .control-panel {
+            background: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;
+        }
+        .input-group { display: flex; align-items: center; font-size: 1.5rem; font-weight: bold; }
+        input[type="number"] {
+            width: 60px; height: 40px; font-size: 1.2rem; text-align: center;
+            border: 2px solid #ddd; border-radius: 8px; margin: 0 5px;
+            font-family: 'Jua';
+        }
+        input:focus { border-color: #4a69bd; outline: none; }
+
+        .btn {
+            padding: 10px 20px; font-size: 1.2rem; border: none; border-radius: 10px;
+            cursor: pointer; color: white; font-family: 'Jua'; transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-check { background-color: #27ae60; }
+        .btn-skip { background-color: #e67e22; }
+
+        /* 점수판 */
+        .score-board {
+            margin-top: 20px; font-size: 1.2rem; color: #2c3e50;
+            background: #dfe6e9; padding: 10px 20px; border-radius: 20px;
+        }
+
+        /* 결과 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; }
+        .modal-content h2 { margin-top: 0; }
+        .modal-btn { background-color: #4a69bd; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Jua'; font-size: 1.2rem; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="home-btn" onclick="location.href='../../index.html'">🏠 홈</button>
+        <h1>📍 좌표를 찾아라!</h1>
+    </header>
+
+    <div class="container">
+        <div class="score-board">
+            맞춘 개수: <span id="score">0</span> | 연속 정답: <span id="streak">0</span>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="graphCanvas" width="340" height="340"></canvas>
+        </div>
+
+        <div class="control-panel">
+            <div class="input-group">
+                ( <input type="number" id="inputX" placeholder="x"> , 
+                  <input type="number" id="inputY" placeholder="y"> )
+            </div>
+            <button class="btn btn-check" onclick="checkAnswer()">확인</button>
+            <button class="btn btn-skip" onclick="generateProblem()">패스</button>
+        </div>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">정답! 🎉</h2>
+            <p id="modalMsg">정확한 좌표입니다.</p>
+            <button class="modal-btn" onclick="closeModal()">다음 문제</button>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 설정값
+    const RANGE = 10; // -10 ~ 10 범위
+    const GRID_SIZE = canvas.width / (RANGE * 2 + 2); // 격자 한 칸 크기
+    const CENTER = canvas.width / 2;
+    
+    let targetX = 0;
+    let targetY = 0;
+    let score = 0;
+    let streak = 0;
+
+    // 1. 문제 생성
+    function generateProblem() {
+        // -10 ~ 10 사이의 랜덤 정수 (0은 제외하는 게 좋음)
+        do {
+            targetX = Math.floor(Math.random() * (RANGE * 2 + 1)) - RANGE;
+            targetY = Math.floor(Math.random() * (RANGE * 2 + 1)) - RANGE;
+        } while (targetX === 0 && targetY === 0); // 원점 문제 방지 (원하면 삭제 가능)
+
+        // 입력창 초기화
+        document.getElementById('inputX').value = '';
+        document.getElementById('inputY').value = '';
+        document.getElementById('inputX').focus();
+
+        drawGraph();
+    }
+
+    // 2. 그래프 그리기
+    function drawGraph() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 그리드 그리기
+        ctx.strokeStyle = '#e0e0e0'; // 연한 회색
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        
+        // 세로선, 가로선
+        for(let i = 0; i <= RANGE * 2 + 2; i++) {
+            let pos = i * GRID_SIZE;
+            // 세로
+            ctx.moveTo(pos, 0); ctx.lineTo(pos, canvas.height);
+            // 가로
+            ctx.moveTo(0, pos); ctx.lineTo(canvas.width, pos);
+        }
+        ctx.stroke();
+
+        // 축 그리기 (x축, y축)
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // x축
+        ctx.moveTo(0, CENTER); ctx.lineTo(canvas.width, CENTER);
+        // y축
+        ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, canvas.height);
+        ctx.stroke();
+
+        // 화살표 그리기 (생략 가능하지만 디테일 추가)
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#333';
+        ctx.fillText("x", canvas.width - 15, CENTER - 5);
+        ctx.fillText("y", CENTER + 5, 15);
+        ctx.fillText("0", CENTER + 5, CENTER + 15); // 원점
+
+        // 빨간 점 찍기 (Target)
+        const pointPixelX = CENTER + (targetX * GRID_SIZE);
+        const pointPixelY = CENTER - (targetY * GRID_SIZE); // y축은 위로 갈수록 좌표값은 커지지만 픽셀은 작아짐
+
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(pointPixelX, pointPixelY, 6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // 3. 정답 확인
+    function checkAnswer() {
+        const userX = parseInt(document.getElementById('inputX').value);
+        const userY = parseInt(document.getElementById('inputY').value);
+
+        if (isNaN(userX) || isNaN(userY)) {
+            alert("좌표를 입력해주세요!");
+            return;
+        }
+
+        const modal = document.getElementById('resultModal');
+        const title = document.getElementById('modalTitle');
+        const msg = document.getElementById('modalMsg');
+        const btn = document.querySelector('.modal-btn');
+
+        if (userX === targetX && userY === targetY) {
+            score++;
+            streak++;
+            title.innerText = "정답입니다! 🎉";
+            title.style.color = "#27ae60";
+            msg.innerText = `정확해요! (${targetX}, ${targetY})`;
+            btn.innerText = "다음 문제";
+            btn.onclick = () => { closeModal(); generateProblem(); };
+        } else {
+            streak = 0;
+            title.innerText = "틀렸습니다 😢";
+            title.style.color = "#c0392b";
+            msg.innerText = "다시 한번 그래프를 잘 살펴보세요.";
+            btn.innerText = "다시 시도";
+            btn.onclick = () => { closeModal(); }; // 문제 유지
+        }
+
+        updateScore();
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = 'none';
+        // 다음 문제로 넘어갈 때 입력창으로 포커스
+        if(document.querySelector('.modal-btn').innerText === "다음 문제") {
+             document.getElementById('inputX').focus();
+        }
+    }
+
+    function updateScore() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('streak').innerText = streak;
+    }
+
+    // 엔터키 입력 지원
+    document.getElementById('inputY').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    // 시작
+    generateProblem();
+
+</script>
+
+</body>
+</html>

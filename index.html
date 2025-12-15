@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대수막대 마스터 클래스 (Final v4)</title>
+    <style>
+        /* 1. 기본 설정 */
+        body {
+            font-family: 'Jua', 'Malgun Gothic', sans-serif;
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            height: 100vh; background-color: #f8f9fa;
+            overflow: hidden;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        /* 2. 화면 관리 */
+        .screen { display: none; height: 100%; width: 100%; }
+        .active { display: flex; flex-direction: column; }
+
+        /* 메인 메뉴 */
+        #menuScreen {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            justify-content: center; align-items: center;
+            color: white; text-align: center;
+        }
+        #menuScreen h1 { font-size: 3.5rem; margin-bottom: 50px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        .menu-btn {
+            display: block; width: 400px; padding: 20px; margin: 20px auto;
+            font-size: 1.5rem; border: none; border-radius: 15px; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .btn-tuto { background: #ff9f43; color: #fff; }
+        .btn-prac { background: #1dd1a1; color: #fff; }
+        .btn-chall { background: #ee5253; color: #fff; }
+        .menu-btn:hover { transform: scale(1.05); }
+
+        /* 헤더 */
+        header {
+            background-color: #343a40; color: white; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 60px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 50;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .home-btn { 
+            background: transparent; border: 2px solid white; color: white; 
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;
+        }
+        .home-btn:hover { background: white; color: #333; }
+        
+        .problem-box {
+            background: #fff; color: #333; padding: 5px 25px; border-radius: 20px;
+            font-size: 1.5rem; font-weight: bold;
+        }
+
+        .btn-group button {
+            padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer;
+            font-weight: bold; margin-left: 5px; font-size: 0.95rem; color: white;
+        }
+        .btn-new { background-color: #fd7e14; }
+        .btn-select-all { background-color: #0984e3; }
+        .btn-check { background-color: #28a745; }
+        .btn-reset { background-color: #dc3545; }
+
+        .container { display: flex; flex: 1; height: calc(100vh - 80px); }
+
+        /* 사이드바 */
+        .sidebar {
+            width: 220px; min-width: 220px; background-color: #e9ecef;
+            border-right: 2px solid #dee2e6; padding: 20px 10px;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 20px; overflow-y: auto; z-index: 60;
+        }
+        .section-title { width: 100%; text-align: center; font-weight: bold; border-bottom: 2px solid #adb5bd; margin-bottom: 5px; color: #555;}
+
+        /* 타일 스타일 */
+        .tile {
+            display: flex; justify-content: center; align-items: center;
+            font-size: 14px; font-weight: bold; color: white;
+            position: absolute; user-select: none; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            border-radius: 3px; cursor: grab; z-index: 10;
+        }
+        .tile-source { position: relative; margin-bottom: 10px; flex-shrink: 0; transition: transform 0.2s; }
+        .tile-source:hover { transform: scale(1.1); }
+
+        /* 선택된 타일 강조 (노란 테두리) */
+        .tile.selected {
+            box-shadow: 0 0 0 3px #f1c40f, 4px 4px 10px rgba(0,0,0,0.5);
+            z-index: 20; 
+            transform: scale(1.02);
+        }
+
+        .pos { background-color: #e03131; border: 1px solid #c92a2a; }
+        .neg { background-color: #1971c2; border: 1px solid #1864ab; }
+        .zero-pair { background-color: #20c997 !important; border: 1px solid #0ca678 !important; opacity: 0.8; }
+
+        .size-x2 { width: 125px; height: 125px; }
+        .size-x { width: 25px; height: 125px; }
+        .size-1 { width: 25px; height: 25px; }
+
+        /* 캔버스 */
+        .canvas-area {
+            flex: 1; position: relative; background-color: #ffffff;
+            background-image: linear-gradient(#e9ecef 1px, transparent 1px), linear-gradient(90deg, #e9ecef 1px, transparent 1px);
+            background-size: 25px 25px; overflow: hidden;
+            outline: none; 
+        }
+
+        /* 드래그 선택 박스 */
+        #selectionBox {
+            position: absolute;
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px dashed #2196F3;
+            display: none;
+            z-index: 999; /* 타일보다 훨씬 위 */
+            pointer-events: none; /* 클릭 통과 */
+        }
+
+        .bottom-hint {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9); color: #444; padding: 10px 30px;
+            border-radius: 50px; font-size: 1.1rem; font-weight: bold; pointer-events: none;
+            border: 2px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 5; white-space: nowrap;
+        }
+
+        #trashCan {
+            position: absolute; bottom: 20px; right: 30px; font-size: 3.5rem;
+            cursor: pointer; z-index: 5; transition: transform 0.2s; opacity: 0.7;
+        }
+        #trashCan.hover { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 10px red); }
+
+        .tutorial-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; display: none; }
+        .bubble {
+            position: absolute; background: white; color: #333; padding: 20px; border-radius: 15px; border: 3px solid #ff9f43;
+            font-size: 1.2rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            pointer-events: auto; cursor: pointer; max-width: 300px; animation: bounce 1s infinite alternate;
+        }
+        .bubble::after { content: ''; position: absolute; border: 10px solid transparent; }
+        @keyframes bounce { from {transform: translateY(0);} to {transform: translateY(-10px);} }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; }
+        .modal-content h2 { margin-top: 0; }
+
+    </style>
+</head>
+<body>
+
+    <div id="menuScreen" class="screen active">
+        <h1>📐 대수막대 마스터</h1>
+        <button class="menu-btn btn-tuto" onclick="startGame('tutorial')">🐣 튜토리얼 (처음이라면)</button>
+        <button class="menu-btn btn-prac" onclick="startGame('practice')">🏫 연습 모드 (기본)</button>
+        <button class="menu-btn btn-chall" onclick="startGame('challenge')">🔥 챌린저 모드 (심화)</button>
+    </div>
+
+    <div id="gameScreen" class="screen">
+        <header>
+            <div class="header-left">
+                <button class="home-btn" onclick="showMenu()">🏠 메뉴로</button>
+                <h1>대수막대</h1>
+            </div>
+            <div class="problem-box" id="problemDisplay">문제 로딩중...</div>
+            <div class="btn-group">
+                <button class="btn-new" id="btnNewProblem" onclick="generateProblem()">새 문제</button>
+                <button class="btn-select-all" onclick="selectAllTiles()">전체 선택</button>
+                <button class="btn-check" onclick="checkAnswer()">정답 확인</button>
+                <button class="btn-reset" onclick="clearCanvas()">지우기</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="sidebar" id="sidebar">
+                <div class="section-title">양수 (+)</div>
+                <div class="tile tile-source pos size-x2" data-type="x2" data-val="25" data-sign="1">x²</div>
+                <div class="tile tile-source pos size-x" data-type="x" data-val="5" data-sign="1">x</div>
+                <div class="tile tile-source pos size-1" data-type="1" data-val="1" data-sign="1">1</div>
+
+                <div class="section-title" style="margin-top:20px;">음수 (-)</div>
+                <div class="tile tile-source neg size-x2" data-type="nx2" data-val="-25" data-sign="-1">-x²</div>
+                <div class="tile tile-source neg size-x" data-type="nx" data-val="-5" data-sign="-1">-x</div>
+                <div class="tile tile-source neg size-1" data-type="n1" data-val="-1" data-sign="-1">-1</div>
+            </div>
+
+            <div class="canvas-area" id="canvas">
+                <div class="bottom-hint">💡 드래그: 다중 선택 / Ctrl+클릭: 개별 선택 (더블클릭 → 회전)</div>
+                <div id="trashCan">🗑️</div>
+                <div id="selectionBox"></div>
+
+                <div id="tutorialOverlay" class="tutorial-overlay">
+                    <div id="bubble1" class="bubble" style="top: 50%; left: 50%; transform: translate(-50%, -50%); display:none;" onclick="nextTutorialStep(1)">
+                        👋 안녕! 대수막대 세상에 온 걸 환영해.<br><br>클릭하면 다음으로 넘어갈게.
+                    </div>
+                    <div id="bubble2" class="bubble" style="top: 100px; left: 250px; display:none;" onclick="nextTutorialStep(2)">
+                        👈 왼쪽 <b>창고</b>에서<br>필요한 블록을 꺼낼 수 있어.
+                    </div>
+                    <div id="bubble3" class="bubble" style="top: 40%; left: 60%; transform: translate(-50%, -50%); display:none;" onclick="nextTutorialStep(3)">
+                        🎨 <b>빈 공간을 드래그</b>하면<br>여러 개를 한 번에 잡을 수 있어!<br>(Ctrl 누르고 클릭하면 하나씩 추가!)
+                    </div>
+                    <div id="bubble4" class="bubble" style="top: 70px; left: 50%; transform: translateX(-50%); display:none;" onclick="endTutorial()">
+                        🎯 목표는 <b>위쪽의 식</b>과<br>똑같은 넓이를 만드는 거야.<br><br>자, (x+1)(x+2)를 풀어보자!<br>(클릭하면 시작)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMsg"></p>
+            <button class="btn-new" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+
+<script>
+    const GRID_SIZE = 25; 
+    let currentMode = 'practice';
+    let currentProblem = {};
+    let draggedTile = null; 
+    let selectedTiles = []; 
+    let isDraggingGroup = false; 
+    
+    let lastMouseX, lastMouseY;
+    
+    // 드래그 선택 관련 변수
+    let isSelecting = false;
+    let selectionStart = { x: 0, y: 0 };
+    
+    // 요소 참조
+    const selectionBox = document.getElementById('selectionBox');
+    const trashCan = document.getElementById('trashCan');
+    const menuScreen = document.getElementById('menuScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const canvas = document.getElementById('canvas');
+    const problemDisplay = document.getElementById('problemDisplay');
+    const btnNewProblem = document.getElementById('btnNewProblem');
+    const tutorialOverlay = document.getElementById('tutorialOverlay');
+
+    function showMenu() {
+        gameScreen.classList.remove('active');
+        menuScreen.classList.add('active');
+        clearCanvas();
+    }
+
+    function startGame(mode) {
+        currentMode = mode;
+        menuScreen.classList.remove('active');
+        gameScreen.classList.add('active');
+
+        if (mode === 'tutorial') {
+            btnNewProblem.style.display = 'none';
+            generateProblem();
+            startTutorialSequence();
+        } else {
+            btnNewProblem.style.display = 'inline-block';
+            tutorialOverlay.style.display = 'none';
+            generateProblem();
+        }
+    }
+
+    function generateProblem() {
+        clearCanvas();
+        if (currentMode === 'tutorial') {
+            currentProblem = { a_coeff: 1, a_const: 1, b_coeff: 1, b_const: 2 };
+            problemDisplay.innerText = "목표: (x+1)(x+2) = x² + 3x + 2";
+            return;
+        }
+
+        let a_coeff = 1, b_coeff = 1;
+        let a_const = Math.floor(Math.random() * 7) - 3;
+        let b_const = Math.floor(Math.random() * 7) - 3;
+        if(a_const === 0) a_const = 1; if(b_const === 0) b_const = 2;
+
+        if (currentMode === 'challenge') {
+            const coeffs = [1, 1, 2, -1, -2];
+            a_coeff = coeffs[Math.floor(Math.random() * coeffs.length)];
+        }
+
+        currentProblem = { a_coeff, a_const, b_coeff, b_const };
+        const A = a_coeff * b_coeff;
+        const B = a_coeff * b_const + a_const * b_coeff;
+        const C = a_const * b_const;
+
+        let expr = "";
+        if (A === 1) expr += "x²"; else if (A === -1) expr += "-x²"; else expr += `${A}x²`;
+        if (B > 0) expr += ` + ${B===1?'':B}x`; else if (B < 0) expr += ` - ${Math.abs(B)===1?'':Math.abs(B)}x`;
+        if (C > 0) expr += ` + ${C}`; else if (C < 0) expr += ` - ${Math.abs(C)}`;
+        problemDisplay.innerText = `목표: ${expr}`;
+    }
+
+    function clearCanvas() {
+        const tiles = canvas.querySelectorAll('.tile:not(.tile-source)');
+        tiles.forEach(t => t.remove());
+        selectedTiles = [];
+    }
+
+    function selectAllTiles() {
+        const tiles = canvas.querySelectorAll('.tile:not(.tile-source)');
+        selectedTiles = Array.from(tiles);
+        selectedTiles.forEach(t => t.classList.add('selected'));
+    }
+
+    function clearSelection() {
+        selectedTiles.forEach(t => t.classList.remove('selected'));
+        selectedTiles = [];
+    }
+
+    // === [드래그 선택 로직 수정] ===
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.tile') || e.target.closest('button') || e.target.closest('#trashCan')) return;
+        startSelection(e);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.tile') || e.target.closest('button') || e.target.closest('#trashCan')) return;
+        startSelection(e);
+    }, {passive: false});
+
+    function startSelection(e) {
+        if(e.type === 'mousedown') e.preventDefault();
+        
+        clearSelection(); // 기존 선택 해제
+        isSelecting = true;
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = canvas.getBoundingClientRect();
+
+        selectionStart.x = clientX - rect.left;
+        selectionStart.y = clientY - rect.top;
+
+        selectionBox.style.left = selectionStart.x + 'px';
+        selectionBox.style.top = selectionStart.y + 'px';
+        selectionBox.style.width = '0px';
+        selectionBox.style.height = '0px';
+        selectionBox.style.display = 'block';
+
+        if(e.type === 'mousedown') {
+            document.addEventListener('mousemove', updateSelection);
+            document.addEventListener('mouseup', endSelection);
+        } else {
+            document.addEventListener('touchmove', updateSelection, {passive: false});
+            document.addEventListener('touchend', endSelection);
+        }
+    }
+
+    function updateSelection(e) {
+        if (!isSelecting) return;
+        if(e.type === 'touchmove') e.preventDefault(); 
+
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const currentX = clientX - rect.left;
+        const currentY = clientY - rect.top;
+
+        const width = Math.abs(currentX - selectionStart.x);
+        const height = Math.abs(currentY - selectionStart.y);
+        const left = Math.min(currentX, selectionStart.x);
+        const top = Math.min(currentY, selectionStart.y);
+
+        selectionBox.style.left = left + 'px';
+        selectionBox.style.top = top + 'px';
+        selectionBox.style.width = width + 'px';
+        selectionBox.style.height = height + 'px';
+    }
+
+    function endSelection(e) {
+        if (!isSelecting) return;
+        isSelecting = false;
+        
+        // [중요 수정] 선택 박스를 숨기기 전에 좌표를 계산해야 함!
+        // 숨겨버리면(.style.display='none') getBoundingClientRect가 0을 반환함.
+        const selRect = selectionBox.getBoundingClientRect();
+        const tiles = canvas.querySelectorAll('.tile:not(.tile-source)');
+        
+        tiles.forEach(tile => {
+            const tileRect = tile.getBoundingClientRect();
+            // 충돌 감지
+            if (isIntersect(selRect, tileRect)) {
+                tile.classList.add('selected');
+                selectedTiles.push(tile);
+            }
+        });
+
+        // 계산 끝난 후 숨김
+        selectionBox.style.display = 'none';
+
+        document.removeEventListener('mousemove', updateSelection);
+        document.removeEventListener('mouseup', endSelection);
+        document.removeEventListener('touchmove', updateSelection);
+        document.removeEventListener('touchend', endSelection);
+    }
+
+    function isIntersect(r1, r2) {
+        // r1: selection box, r2: tile
+        // getBoundingClientRect는 뷰포트 기준이므로 스크롤 상관없이 비교 가능
+        return !(r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top);
+    }
+
+    // === [타일 로직] ===
+    const sources = document.querySelectorAll('.tile-source');
+    sources.forEach(src => {
+        src.addEventListener('mousedown', startDragFromSource);
+        src.addEventListener('touchstart', startDragFromSource, {passive: false});
+    });
+
+    function startDragFromSource(e) {
+        if(currentMode === 'tutorial' && tutorialOverlay.style.display !== 'none') return;
+        e.preventDefault();
+        
+        clearSelection();
+
+        const newTile = document.createElement('div');
+        newTile.className = this.className.replace('tile-source', '');
+        newTile.setAttribute('data-val', this.getAttribute('data-val'));
+        newTile.setAttribute('data-sign', this.getAttribute('data-sign'));
+        newTile.innerText = this.innerText;
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = canvas.getBoundingClientRect();
+
+        canvas.appendChild(newTile);
+        const w = newTile.offsetWidth;
+        const h = newTile.offsetHeight;
+        newTile.style.left = (clientX - rect.left - w/2) + 'px';
+        newTile.style.top = (clientY - rect.top - h/2) + 'px';
+
+        newTile.classList.add('selected');
+        selectedTiles.push(newTile);
+        initDrag(e, newTile);
+    }
+
+    function initDrag(e, tile) {
+        const isCtrlPressed = e.ctrlKey || e.metaKey;
+
+        if (isCtrlPressed) {
+            if (selectedTiles.includes(tile)) {
+                tile.classList.remove('selected');
+                selectedTiles = selectedTiles.filter(t => t !== tile);
+                return; 
+            } else {
+                tile.classList.add('selected');
+                selectedTiles.push(tile);
+            }
+        } else {
+            // 이미 선택된 그룹에 속한게 아니라면, 단독 선택으로 리셋
+            if (!selectedTiles.includes(tile)) {
+                clearSelection();
+                tile.classList.add('selected');
+                selectedTiles.push(tile);
+            }
+        }
+
+        draggedTile = tile;
+        isDraggingGroup = true;
+        selectedTiles.forEach(t => t.classList.remove('zero-pair'));
+
+        lastMouseX = e.touches ? e.touches[0].clientX : e.clientX;
+        lastMouseY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('touchend', onUp);
+
+        if (!tile.dataset.bound) {
+            tile.dataset.bound = true;
+            tile.addEventListener('dblclick', (ev) => {
+                ev.stopPropagation(); 
+                rotateTile(tile);
+            });
+            tile.addEventListener('mousedown', (ev) => { 
+                ev.stopPropagation(); 
+                initDrag(ev, tile); 
+            });
+            tile.addEventListener('touchstart', (ev) => { 
+                ev.stopPropagation(); 
+                initDrag(ev, tile); 
+            });
+        }
+    }
+
+    function onMove(e) {
+        if (!isDraggingGroup) return;
+        e.preventDefault();
+        
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const dx = clientX - lastMouseX;
+        const dy = clientY - lastMouseY;
+
+        selectedTiles.forEach(t => {
+            const curL = parseFloat(t.style.left);
+            const curT = parseFloat(t.style.top);
+            t.style.left = (curL + dx) + 'px';
+            t.style.top = (curT + dy) + 'px';
+        });
+
+        lastMouseX = clientX;
+        lastMouseY = clientY;
+
+        const trashRect = trashCan.getBoundingClientRect();
+        const tileRect = draggedTile.getBoundingClientRect();
+        if (isIntersect(trashRect, tileRect)) trashCan.classList.add('hover');
+        else trashCan.classList.remove('hover');
+    }
+
+    function onUp(e) {
+        if (!isDraggingGroup) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const trashRect = trashCan.getBoundingClientRect();
+        const leaderRect = draggedTile.getBoundingClientRect();
+        const leaderL = parseFloat(draggedTile.style.left);
+        const leaderT = parseFloat(draggedTile.style.top);
+
+        const shouldDelete = isIntersect(trashRect, leaderRect) || 
+                             leaderL < -50 || leaderT < -50 || 
+                             leaderL > rect.width || leaderT > rect.height;
+
+        if (shouldDelete) {
+            selectedTiles.forEach(t => t.remove());
+            selectedTiles = [];
+            trashCan.classList.remove('hover');
+        } else {
+            selectedTiles.forEach(t => {
+                const curL = parseFloat(t.style.left);
+                const curT = parseFloat(t.style.top);
+                const snL = Math.round(curL / GRID_SIZE) * GRID_SIZE;
+                const snT = Math.round(curT / GRID_SIZE) * GRID_SIZE;
+                t.style.left = snL + 'px';
+                t.style.top = snT + 'px';
+                
+                if(currentMode === 'challenge') checkZeroPair(t);
+            });
+        }
+
+        isDraggingGroup = false;
+        draggedTile = null;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+    }
+
+    function checkZeroPair(tile) {
+        const tiles = canvas.querySelectorAll('.tile:not(.tile-source)');
+        const myRect = tile.getBoundingClientRect();
+        const mySign = parseInt(tile.getAttribute('data-sign'));
+        
+        tiles.forEach(other => {
+            if (other === tile) return;
+            const otherRect = other.getBoundingClientRect();
+            if (Math.abs(myRect.left - otherRect.left) < 5 && Math.abs(myRect.top - otherRect.top) < 5) {
+                if (Math.abs(myRect.width - otherRect.width) < 5 && Math.abs(myRect.height - otherRect.height) < 5) {
+                    const otherSign = parseInt(other.getAttribute('data-sign'));
+                    if (mySign !== otherSign) {
+                        tile.classList.add('zero-pair');
+                        other.classList.add('zero-pair');
+                    }
+                }
+            }
+        });
+    }
+
+    function rotateTile(tile) {
+        if (tile.classList.contains('size-x')) {
+            const w = tile.style.width || window.getComputedStyle(tile).width;
+            const h = tile.style.height || window.getComputedStyle(tile).height;
+            tile.style.width = h;
+            tile.style.height = w;
+            
+            if (currentMode === 'challenge') {
+                tile.classList.remove('zero-pair');
+                checkZeroPair(tile);
+            }
+        }
+    }
+
+    function checkAnswer() {
+        const tiles = canvas.querySelectorAll('.tile:not(.tile-source)');
+        let totalVal = 0;
+        tiles.forEach(t => {
+            if (!t.classList.contains('zero-pair')) totalVal += parseInt(t.getAttribute('data-val'));
+        });
+
+        const xVal = 5;
+        const p = currentProblem;
+        const term1 = p.a_coeff * xVal + p.a_const;
+        const term2 = p.b_coeff * xVal + p.b_const;
+        const targetVal = term1 * term2;
+
+        const modal = document.getElementById('resultModal');
+        const title = document.getElementById('modalTitle');
+        const msg = document.getElementById('modalMsg');
+
+        if (tiles.length === 0) {
+             title.innerText = "블록이 없어요 😅"; msg.innerText = "블록을 배치해보세요."; title.style.color = "orange";
+        } else if (totalVal === targetVal) {
+            title.innerText = "정답입니다! 🎉"; msg.innerText = "완벽해요!"; title.style.color = "green";
+        } else {
+            title.innerText = "오답입니다 😢"; msg.innerText = "넓이가 일치하지 않아요."; title.style.color = "red";
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('resultModal').style.display = 'none'; }
+
+    function startTutorialSequence() {
+        tutorialOverlay.style.display = 'block';
+        document.getElementById('bubble1').style.display = 'block';
+    }
+    function nextTutorialStep(step) {
+        document.getElementById(`bubble${step}`).style.display = 'none';
+        const next = document.getElementById(`bubble${step+1}`);
+        if(next) next.style.display = 'block';
+    }
+    function endTutorial() {
+        tutorialOverlay.style.display = 'none';
+        document.getElementById('bubble4').style.display = 'none';
+    }
+</script>
+</body>
+</html>

@@ -6,7 +6,7 @@
     <title>사분면 맞추기 | Quadrant Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     <style>
-        /* 1. 공통 설정 & 배경 */
+        /* 1. 공통 설정 */
         body {
             font-family: 'Jua', sans-serif;
             margin: 0; padding: 0;
@@ -22,7 +22,7 @@
             backdrop-filter: blur(5px);
             color: #2d3436; width: 100%;
             padding: 15px 0; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; z-index: 10;
         }
         .home-btn {
             position: absolute; left: 20px;
@@ -33,60 +33,72 @@
         .home-btn:active { transform: translateY(3px); box-shadow: none; }
         h1 { margin: 0; font-size: 1.8rem; text-shadow: 2px 2px 0 white; }
 
-        /* 3. 메인 컨텐츠 */
+        /* 3. 메인 컨텐츠 레이아웃 (너비 통일의 핵심) */
         .container {
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; flex: 1; width: 100%; padding: 20px; box-sizing: border-box;
+            justify-content: center; flex: 1; width: 100%; padding: 20px; 
+            box-sizing: border-box;
+        }
+
+        /* 게임 전체를 감싸는 프레임 (너비 340px 고정) */
+        .game-frame {
+            width: 340px; /* 여기서 너비를 고정해서 위아래를 맞춤 */
+            display: flex; flex-direction: column; align-items: center;
         }
 
         /* 점수판 */
         .score-board {
-            margin-bottom: 20px; font-size: 1.3rem; color: #2d3436;
-            background: rgba(255,255,255,0.6); padding: 10px 25px; border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 100%; box-sizing: border-box; /* 프레임 너비에 맞춤 */
+            margin-bottom: 20px; font-size: 1.2rem; color: #2d3436;
+            background: rgba(255,255,255,0.6); padding: 10px 0; border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;
         }
 
         /* 캔버스 래퍼 */
         .canvas-wrapper {
+            width: 100%; /* 프레임 너비(340px)를 가득 채움 */
             background: white; border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            padding: 15px; margin-bottom: 25px;
-            display: flex; justify-content: center; align-items: center;
+            padding: 10px; /* 내부 여백 */
+            margin-bottom: 15px;
+            box-sizing: border-box; /* 패딩 포함해서 크기 계산 */
             border: 4px solid #fff;
+            display: flex; justify-content: center; align-items: center;
         }
         
         canvas { 
-            background-color: #fff; 
-            width: 300px; height: 300px;
+            width: 100%; /* 래퍼 안에 꽉 차게 */
+            height: auto;
+            aspect-ratio: 1/1; /* 정사각형 유지 */
             display: block; border-radius: 10px;
+            background-color: #fff; 
         }
 
-        /* [수정] 입력 컨트롤 (한 줄 배치) */
+        /* 버튼 컨트롤 패널 */
         .control-panel {
-            display: flex; /* 한 줄로 나열 */
-            gap: 10px;     /* 버튼 사이 간격 */
-            width: 100%; 
-            max-width: 600px; /* 넓게 퍼지도록 최대 너비 증가 */
-            justify-content: center;
+            width: 100%; /* 프레임 너비(340px)를 가득 채움 */
+            display: flex; 
+            justify-content: space-between; /* 버튼 사이 균등 배분 */
+            gap: 8px; /* 버튼 사이 간격 */
         }
 
         .q-btn {
-            flex: 1; /* 공간을 똑같이 나눠 가짐 */
-            padding: 15px 5px; /* 내부 여백 조절 */
-            font-size: 1.1rem; /* 글자 크기 살짝 조정 */
-            border: none; border-radius: 15px;
+            flex: 1; /* 4개 버튼이 공간을 똑같이 나눠가짐 */
+            padding: 15px 0; /* 위아래 패딩만 주고 좌우는 자동 */
+            font-size: 1rem; /* 글자 크기 살짝 조정 */
+            white-space: nowrap; /* [핵심] 글자가 절대 줄바꿈되지 않음 */
+            border: none; border-radius: 12px;
             cursor: pointer; color: white; font-family: 'Jua';
             box-shadow: 0 4px 0 rgba(0,0,0,0.2);
             transition: all 0.1s;
-            word-break: keep-all; /* 단어 끊김 방지 */
         }
         .q-btn:active { transform: translateY(4px); box-shadow: none !important; }
 
-        /* 각 사분면 버튼 색상 (순서대로 무지개 느낌) */
-        .btn-q1 { background-color: #ff7675; box-shadow: 0 4px 0 #d63031; } /* 빨강 */
-        .btn-q2 { background-color: #fab1a0; box-shadow: 0 4px 0 #e17055; } /* 주황 */
-        .btn-q3 { background-color: #00cec9; box-shadow: 0 4px 0 #00b894; } /* 청록 */
-        .btn-q4 { background-color: #0984e3; box-shadow: 0 4px 0 #74b9ff; } /* 파랑 */
+        /* 색상 */
+        .btn-q1 { background-color: #ff7675; box-shadow: 0 4px 0 #d63031; }
+        .btn-q2 { background-color: #fab1a0; box-shadow: 0 4px 0 #e17055; }
+        .btn-q3 { background-color: #00cec9; box-shadow: 0 4px 0 #00b894; }
+        .btn-q4 { background-color: #0984e3; box-shadow: 0 4px 0 #74b9ff; }
 
         /* 4. 결과 모달 */
         .modal {
@@ -98,43 +110,42 @@
             background: white; padding: 30px; border-radius: 25px; 
             text-align: center; width: 300px; 
             box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 4px solid #2d3436;
+            animation: popIn 0.3s;
         }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-content h2 { margin: 0 0 15px 0; font-size: 2rem; }
-        .modal-content p { font-size: 1.3rem; margin-bottom: 25px; color: #555; line-height: 1.4; }
         .modal-btn { 
             background-color: #2d3436; color: white; padding: 12px 30px; 
             border: none; border-radius: 30px; cursor: pointer; 
-            font-family: 'Jua'; font-size: 1.2rem; 
-            box-shadow: 0 4px 0 #000; transition: all 0.1s;
+            font-family: 'Jua'; font-size: 1.2rem; margin-top: 15px;
+            box-shadow: 0 4px 0 #000;
         }
         .modal-btn:active { transform: translateY(4px); box-shadow: none; }
-
     </style>
 </head>
 <body>
 
     <header>
-        <a href="../../index.html" class="home-btn">🏠 홈으로</a>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
         <h1>🤔 여기는 몇 사분면?</h1>
     </header>
 
     <div class="container">
-        <div class="score-board">
-            맞춘 개수: <span id="score">0</span> | 연속 정답: <span id="streak">0</span>
-        </div>
+        <div class="game-frame">
+            <div class="score-board">
+                맞춘 개수: <span id="score">0</span> | 연속 정답: <span id="streak">0</span>
+            </div>
 
-        <div class="canvas-wrapper">
-            <canvas id="graphCanvas" width="600" height="600"></canvas>
-        </div>
+            <div class="canvas-wrapper">
+                <canvas id="graphCanvas"></canvas>
+            </div>
 
-        <div class="control-panel">
-            <button class="q-btn btn-q1" onclick="checkAnswer(1)">제1<br>사분면</button>
-            <button class="q-btn btn-q2" onclick="checkAnswer(2)">제2<br>사분면</button>
-            <button class="q-btn btn-q3" onclick="checkAnswer(3)">제3<br>사분면</button>
-            <button class="q-btn btn-q4" onclick="checkAnswer(4)">제4<br>사분면</button>
+            <div class="control-panel">
+                <button class="q-btn btn-q1" onclick="checkAnswer(1)">제1사분면</button>
+                <button class="q-btn btn-q2" onclick="checkAnswer(2)">제2사분면</button>
+                <button class="q-btn btn-q3" onclick="checkAnswer(3)">제3사분면</button>
+                <button class="q-btn btn-q4" onclick="checkAnswer(4)">제4사분면</button>
+            </div>
         </div>
     </div>
 
@@ -150,13 +161,14 @@
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
     
-    // [설정] 캔버스 선명도 및 크기
-    const LOGICAL_SIZE = 300; 
-    ctx.scale(2, 2); 
+    // 캔버스 해상도 설정 (고화질)
+    // CSS에서 300~320px 정도로 보이지만 내부는 640px로 그려서 선명하게
+    const RESOLUTION = 640;
+    canvas.width = RESOLUTION;
+    canvas.height = RESOLUTION;
 
-    const CENTER = LOGICAL_SIZE / 2; 
+    const CENTER = RESOLUTION / 2;
     
-    // 게임 변수
     let targetX = 0; 
     let targetY = 0; 
     let correctQuadrant = 0; 
@@ -166,9 +178,11 @@
 
     // 1. 문제 생성
     function generateProblem() {
+        // -280 ~ 280 (캔버스 안쪽 여백 고려)
+        const range = RESOLUTION / 2 - 40; 
         do {
-            targetX = Math.floor(Math.random() * 261) - 130;
-            targetY = Math.floor(Math.random() * 261) - 130;
+            targetX = Math.floor(Math.random() * (range * 2)) - range;
+            targetY = Math.floor(Math.random() * (range * 2)) - range;
         } while (targetX === 0 || targetY === 0);
 
         if (targetX > 0 && targetY > 0) correctQuadrant = 1;
@@ -182,32 +196,35 @@
 
     // 2. 그래프 그리기
     function drawGraph() {
-        ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
+        ctx.clearRect(0, 0, RESOLUTION, RESOLUTION);
 
         // [축 그리기]
         ctx.strokeStyle = '#2d3436';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 4; // 해상도 커졌으니 선도 굵게
         ctx.fillStyle = '#2d3436';
         ctx.beginPath();
         
-        ctx.moveTo(0, CENTER); ctx.lineTo(LOGICAL_SIZE, CENTER);
-        ctx.moveTo(LOGICAL_SIZE, CENTER);
-        ctx.lineTo(LOGICAL_SIZE - 10, CENTER - 5);
-        ctx.lineTo(LOGICAL_SIZE - 10, CENTER + 5);
+        // x축
+        ctx.moveTo(0, CENTER); ctx.lineTo(RESOLUTION, CENTER);
+        ctx.moveTo(RESOLUTION, CENTER);
+        ctx.lineTo(RESOLUTION - 20, CENTER - 10);
+        ctx.lineTo(RESOLUTION - 20, CENTER + 10);
         ctx.fill();
 
-        ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, LOGICAL_SIZE);
+        // y축
+        ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, RESOLUTION);
         ctx.moveTo(CENTER, 0);
-        ctx.lineTo(CENTER - 5, 10);
-        ctx.lineTo(CENTER + 5, 10);
+        ctx.lineTo(CENTER - 10, 20);
+        ctx.lineTo(CENTER + 10, 20);
         ctx.fill();
         ctx.stroke();
 
-        ctx.font = 'italic bold 16px "Jua", sans-serif';
+        // 텍스트 (해상도에 맞춰 폰트도 크게)
+        ctx.font = 'italic bold 32px "Jua", sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText("O", CENTER - 12, CENTER + 12); 
-        ctx.fillText("x", LOGICAL_SIZE - 10, CENTER - 15); 
-        ctx.fillText("y", CENTER + 15, 15); 
+        ctx.fillText("O", CENTER - 25, CENTER + 25); 
+        ctx.fillText("x", RESOLUTION - 25, CENTER - 30); 
+        ctx.fillText("y", CENTER + 30, 30); 
 
         // [문제의 점 찍기]
         const pointPixelX = CENTER + targetX;
@@ -215,10 +232,10 @@
 
         ctx.fillStyle = '#e84118'; 
         ctx.beginPath();
-        ctx.arc(pointPixelX, pointPixelY, 8, 0, Math.PI * 2); 
+        ctx.arc(pointPixelX, pointPixelY, 16, 0, Math.PI * 2); // 점 크기 키움
         ctx.fill();
         ctx.strokeStyle = 'white';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 6;
         ctx.stroke();
     }
 
@@ -265,6 +282,5 @@
     generateProblem();
 
 </script>
-
 </body>
 </html>

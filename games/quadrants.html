@@ -33,22 +33,22 @@
         .home-btn:active { transform: translateY(3px); box-shadow: none; }
         h1 { margin: 0; font-size: 1.8rem; text-shadow: 2px 2px 0 white; }
 
-        /* 3. 메인 컨텐츠 레이아웃 (너비 통일의 핵심) */
+        /* 3. 메인 컨텐츠 레이아웃 */
         .container {
             display: flex; flex-direction: column; align-items: center;
             justify-content: center; flex: 1; width: 100%; padding: 20px; 
             box-sizing: border-box;
         }
 
-        /* 게임 전체를 감싸는 프레임 (너비 340px 고정) */
+        /* 게임 프레임 (너비 340px 고정) */
         .game-frame {
-            width: 340px; /* 여기서 너비를 고정해서 위아래를 맞춤 */
+            width: 340px; 
             display: flex; flex-direction: column; align-items: center;
         }
 
         /* 점수판 */
         .score-board {
-            width: 100%; box-sizing: border-box; /* 프레임 너비에 맞춤 */
+            width: 100%; box-sizing: border-box; 
             margin-bottom: 20px; font-size: 1.2rem; color: #2d3436;
             background: rgba(255,255,255,0.6); padding: 10px 0; border-radius: 30px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;
@@ -56,37 +56,37 @@
 
         /* 캔버스 래퍼 */
         .canvas-wrapper {
-            width: 100%; /* 프레임 너비(340px)를 가득 채움 */
+            width: 100%; 
             background: white; border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            padding: 10px; /* 내부 여백 */
+            padding: 10px; 
             margin-bottom: 15px;
-            box-sizing: border-box; /* 패딩 포함해서 크기 계산 */
+            box-sizing: border-box; 
             border: 4px solid #fff;
             display: flex; justify-content: center; align-items: center;
         }
         
         canvas { 
-            width: 100%; /* 래퍼 안에 꽉 차게 */
+            width: 100%; 
             height: auto;
-            aspect-ratio: 1/1; /* 정사각형 유지 */
+            aspect-ratio: 1/1; 
             display: block; border-radius: 10px;
             background-color: #fff; 
         }
 
         /* 버튼 컨트롤 패널 */
         .control-panel {
-            width: 100%; /* 프레임 너비(340px)를 가득 채움 */
+            width: 100%; 
             display: flex; 
-            justify-content: space-between; /* 버튼 사이 균등 배분 */
-            gap: 8px; /* 버튼 사이 간격 */
+            justify-content: space-between; 
+            gap: 8px; 
         }
 
         .q-btn {
-            flex: 1; /* 4개 버튼이 공간을 똑같이 나눠가짐 */
-            padding: 15px 0; /* 위아래 패딩만 주고 좌우는 자동 */
-            font-size: 1rem; /* 글자 크기 살짝 조정 */
-            white-space: nowrap; /* [핵심] 글자가 절대 줄바꿈되지 않음 */
+            flex: 1; 
+            padding: 15px 0; 
+            font-size: 1rem; 
+            white-space: nowrap; 
             border: none; border-radius: 12px;
             cursor: pointer; color: white; font-family: 'Jua';
             box-shadow: 0 4px 0 rgba(0,0,0,0.2);
@@ -161,14 +161,17 @@
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
     
-    // 캔버스 해상도 설정 (고화질)
-    // CSS에서 300~320px 정도로 보이지만 내부는 640px로 그려서 선명하게
+    // 고해상도 설정
     const RESOLUTION = 640;
     canvas.width = RESOLUTION;
     canvas.height = RESOLUTION;
 
     const CENTER = RESOLUTION / 2;
     
+    // [설정] 점의 크기와 안전거리
+    const POINT_RADIUS = 16;     // 점의 반지름
+    const SAFE_MARGIN = 25;      // 축에서 떨어져야 하는 최소 거리 (반지름보다 커야 함)
+
     let targetX = 0; 
     let targetY = 0; 
     let correctQuadrant = 0; 
@@ -178,12 +181,15 @@
 
     // 1. 문제 생성
     function generateProblem() {
-        // -280 ~ 280 (캔버스 안쪽 여백 고려)
         const range = RESOLUTION / 2 - 40; 
+        
+        // [수정] 점이 축과 겹치지 않도록 안전거리(SAFE_MARGIN) 이상 떨어진 좌표만 생성
         do {
             targetX = Math.floor(Math.random() * (range * 2)) - range;
             targetY = Math.floor(Math.random() * (range * 2)) - range;
-        } while (targetX === 0 || targetY === 0);
+            
+            // x, y 좌표의 절대값이 안전거리보다 작으면 다시 생성 (축 근처 배제)
+        } while (Math.abs(targetX) < SAFE_MARGIN || Math.abs(targetY) < SAFE_MARGIN);
 
         if (targetX > 0 && targetY > 0) correctQuadrant = 1;
         else if (targetX < 0 && targetY > 0) correctQuadrant = 2;
@@ -200,7 +206,7 @@
 
         // [축 그리기]
         ctx.strokeStyle = '#2d3436';
-        ctx.lineWidth = 4; // 해상도 커졌으니 선도 굵게
+        ctx.lineWidth = 4;
         ctx.fillStyle = '#2d3436';
         ctx.beginPath();
         
@@ -219,7 +225,7 @@
         ctx.fill();
         ctx.stroke();
 
-        // 텍스트 (해상도에 맞춰 폰트도 크게)
+        // 텍스트
         ctx.font = 'italic bold 32px "Jua", sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText("O", CENTER - 25, CENTER + 25); 
@@ -232,7 +238,7 @@
 
         ctx.fillStyle = '#e84118'; 
         ctx.beginPath();
-        ctx.arc(pointPixelX, pointPixelY, 16, 0, Math.PI * 2); // 점 크기 키움
+        ctx.arc(pointPixelX, pointPixelY, POINT_RADIUS, 0, Math.PI * 2); // 설정된 반지름 사용
         ctx.fill();
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 6;

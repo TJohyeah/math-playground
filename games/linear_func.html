@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일차함수 정복 | Linear Function Conquest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 공통 설정 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at 50% 30%, #74b9ff, #0984e3);
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* 2. 헤더 */
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative;
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: #2d3436; color: white; border: none;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; 
+            font-family: 'Jua'; text-decoration: none;
+        }
+        h1 { margin: 0; font-size: 1.8rem; color: #2d3436; }
+
+        /* 3. 게임 영역 */
+        .container {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; width: 100%; max-width: 500px;
+            padding: 20px; box-sizing: border-box;
+        }
+
+        .score-board {
+            background: rgba(255,255,255,0.2); color: white;
+            padding: 10px 25px; border-radius: 30px; margin-bottom: 20px;
+            font-size: 1.2rem; border: 2px solid white;
+        }
+
+        /* 캔버스 래퍼 */
+        .canvas-wrapper {
+            background: white; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 15px; /* 패딩 최소화 */
+            margin-bottom: 20px;
+        }
+        /* 캔버스 크기 CSS로 명시 */
+        canvas { display: block; background: #fff; border-radius: 10px; }
+
+        /* 입력 폼 */
+        .input-area {
+            background: white; padding: 20px 30px; border-radius: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            flex-wrap: wrap; font-size: 1.5rem; color: #2d3436;
+        }
+        
+        input[type="text"] {
+            width: 70px; height: 50px; text-align: center;
+            font-size: 1.5rem; font-family: 'Jua';
+            border: 3px solid #dfe6e9; border-radius: 10px; outline: none;
+            color: #0984e3; transition: 0.2s;
+        }
+        input[type="text"]:focus { border-color: #0984e3; }
+
+        .submit-btn {
+            width: 100%; margin-top: 15px;
+            background: #00cec9; color: white; border: none;
+            padding: 15px; font-size: 1.4rem; border-radius: 15px;
+            cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 5px 0 #00b894; transition: 0.1s;
+        }
+        .submit-btn:active { transform: translateY(5px); box-shadow: none; }
+
+        /* 4. 결과 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { 
+            background: white; padding: 30px; border-radius: 25px; 
+            text-align: center; width: 320px; 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3); border: 4px solid #0984e3;
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-content h2 { margin-top: 0; }
+        
+        .modal-btn-group {
+            display: flex; gap: 10px; justify-content: center; margin-top: 20px;
+        }
+        .modal-btn { 
+            background-color: #0984e3; color: white; padding: 10px 20px; 
+            border: none; border-radius: 20px; cursor: pointer; 
+            font-family: 'Jua'; font-size: 1.1rem; flex: 1;
+            box-shadow: 0 4px 0 #0652dd;
+        }
+        .modal-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .btn-retry { background-color: #fdcb6e; color: #2d3436; box-shadow: 0 4px 0 #e1b12c; }
+        .btn-check { background-color: #d63031; color: white; box-shadow: 0 4px 0 #c0392b; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>📈 일차함수 정복</h1>
+    </header>
+
+    <div class="container">
+        <div class="score-board">
+            맞춘 문제: <span id="score">0</span>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="graphCanvas" width="640" height="640" style="width:320px; height:320px;"></canvas>
+        </div>
+
+        <div class="input-area">
+            <span>y = </span>
+            <input type="text" id="inputA" placeholder="a">
+            <span>x + </span>
+            <input type="text" id="inputB" placeholder="b">
+            <button class="submit-btn" onclick="checkAnswer()">정답 확인!</button>
+        </div>
+        <div style="margin-top:10px; color:white; font-size:0.9rem; opacity:0.9;">
+            * 분수는 '1/2' 처럼 입력하세요.
+        </div>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">정답! 🎉</h2>
+            <div id="modalMsg" style="font-size: 1.1rem; line-height: 1.6; color: #555;">정확합니다!</div>
+            <div class="modal-btn-group" id="modalBtns">
+                <button class="modal-btn" onclick="nextProblem()">다음 문제 👉</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // [수정] 캔버스 크기를 320px로 설정하고 여백 없이 꽉 채움
+    const WIDTH = 320; 
+    const HEIGHT = 320; 
+    ctx.scale(2, 2); 
+
+    const CENTER_X = WIDTH / 2;
+    const CENTER_Y = HEIGHT / 2;
+    
+    const GRID_COUNT = 10; // -10 ~ 10 (총 20칸)
+    
+    // [핵심] 전체 너비를 20칸으로 나누어 눈금 크기 계산 (여백 없음)
+    const SCALE = WIDTH / (GRID_COUNT * 2); 
+
+    let answerA = 0; 
+    let answerB = 0; 
+    let score = 0;
+
+    // 1. 문제 생성
+    function generateProblem() {
+        answerB = Math.floor(Math.random() * 17) - 8;
+        const niceSlopes = [
+            1, -1, 2, -2, 3, -3,     
+            0.5, -0.5, 1/3, -1/3,    
+            2/3, -2/3, 1.5, -1.5     
+        ];
+        answerA = niceSlopes[Math.floor(Math.random() * niceSlopes.length)];
+
+        document.getElementById('inputA').value = '';
+        document.getElementById('inputB').value = '';
+        document.getElementById('inputA').focus();
+
+        drawGraph();
+    }
+
+    // 2. 그래프 그리기
+    function drawGraph() {
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+        // [모눈종이] - 캔버스 끝까지 꽉 차게 그림
+        ctx.strokeStyle = '#dfe6e9'; 
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+
+        // 수직선
+        for (let i = -GRID_COUNT; i <= GRID_COUNT; i++) {
+            let x = CENTER_X + i * SCALE;
+            // 0.5픽셀 보정으로 선명하게
+            x = Math.round(x) + 0.5; 
+            ctx.moveTo(x, 0); ctx.lineTo(x, HEIGHT);
+        }
+        // 수평선
+        for (let i = -GRID_COUNT; i <= GRID_COUNT; i++) {
+            let y = CENTER_Y - i * SCALE;
+            y = Math.round(y) + 0.5;
+            ctx.moveTo(0, y); ctx.lineTo(WIDTH, y);
+        }
+        ctx.stroke();
+
+        // [축 그리기]
+        ctx.strokeStyle = '#2d3436';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        // x축 (끝까지)
+        ctx.moveTo(0, CENTER_Y); ctx.lineTo(WIDTH, CENTER_Y);
+        // 화살표
+        ctx.moveTo(WIDTH, CENTER_Y); ctx.lineTo(WIDTH - 8, CENTER_Y - 4);
+        ctx.moveTo(WIDTH, CENTER_Y); ctx.lineTo(WIDTH - 8, CENTER_Y + 4);
+
+        // y축 (끝까지)
+        ctx.moveTo(CENTER_X, HEIGHT); ctx.lineTo(CENTER_X, 0);
+        // 화살표
+        ctx.moveTo(CENTER_X, 0); ctx.lineTo(CENTER_X - 4, 8);
+        ctx.moveTo(CENTER_X, 0); ctx.lineTo(CENTER_X + 4, 8);
+        ctx.stroke();
+
+        // [텍스트 표시]
+        ctx.fillStyle = '#2d3436';
+        ctx.font = 'bold 12px sans-serif';
+        
+        // 원점
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.fillText('O', CENTER_X - 5, CENTER_Y + 5);
+        
+        // [수정] 축 이름 위치 (x를 위로, y를 오른쪽으로)
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('x', WIDTH - 5, CENTER_Y - 5); // x축 위
+        
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('y', CENTER_X + 5, 5); // y축 옆
+
+        // [숫자 표시] - 캔버스 끝에 닿지 않게 약간 안쪽으로
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('5', CENTER_X + 5 * SCALE, CENTER_Y + 5);
+        ctx.fillText('10', WIDTH - 10, CENTER_Y + 5); // 끝부분 조정
+        ctx.fillText('-5', CENTER_X - 5 * SCALE, CENTER_Y + 5);
+        ctx.fillText('-10', 10, CENTER_Y + 5); // 끝부분 조정
+
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText('5', CENTER_X - 5, CENTER_Y - 5 * SCALE);
+        ctx.fillText('10', CENTER_X - 5, 10); // 끝부분 조정
+        ctx.fillText('-5', CENTER_X - 5, CENTER_Y + 5 * SCALE);
+        ctx.fillText('-10', CENTER_X - 5, HEIGHT - 10); // 끝부분 조정
+
+        // [함수 그래프]
+        ctx.strokeStyle = '#e84118'; 
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+
+        // 캔버스 전체 영역을 덮도록 충분히 길게 그림
+        let startX = -GRID_COUNT - 5; 
+        let startY = answerA * startX + answerB;
+        let endX = GRID_COUNT + 5;
+        let endY = answerA * endX + answerB;
+
+        ctx.moveTo(CENTER_X + startX * SCALE, CENTER_Y - startY * SCALE);
+        ctx.lineTo(CENTER_X + endX * SCALE, CENTER_Y - endY * SCALE);
+        ctx.stroke();
+    }
+
+    // 3. 정답 확인
+    function checkAnswer() {
+        const userA_str = document.getElementById('inputA').value.trim();
+        const userB_str = document.getElementById('inputB').value.trim();
+
+        const userA = parseFraction(userA_str);
+        const userB = parseFraction(userB_str);
+
+        if (isNaN(userA) || isNaN(userB)) {
+            alert("숫자나 분수(예: 1/2)를 입력해주세요!");
+            return;
+        }
+
+        const modal = document.getElementById('resultModal');
+        const title = document.getElementById('modalTitle');
+        const msg = document.getElementById('modalMsg');
+        const btnGroup = document.getElementById('modalBtns');
+
+        const epsilon = 0.01;
+        const isCorrect = Math.abs(userA - answerA) < epsilon && Math.abs(userB - answerB) < epsilon;
+
+        if (isCorrect) {
+            score++;
+            document.getElementById('score').innerText = score;
+            title.innerText = "정답입니다! 🎉";
+            title.style.color = "#00cec9";
+            let aDisplay = formatNumber(answerA);
+            msg.innerHTML = `정확합니다!<br>정답 식: <b>y = ${aDisplay}x + ${answerB}</b>`;
+            btnGroup.innerHTML = `<button class="modal-btn" onclick="nextProblem()">다음 문제 👉</button>`;
+        } else {
+            title.innerText = "아쉬워요 😢";
+            title.style.color = "#d63031";
+            msg.innerHTML = "답이 틀렸습니다.<br>다시 한번 풀어보시겠어요?";
+            btnGroup.innerHTML = `
+                <button class="modal-btn btn-retry" onclick="closeModal()">다시 풀기 ✍️</button>
+                <button class="modal-btn btn-check" onclick="showAnswer()">답 확인하기 👀</button>
+            `;
+        }
+        modal.style.display = 'flex';
+    }
+
+    function showAnswer() {
+        const title = document.getElementById('modalTitle');
+        const msg = document.getElementById('modalMsg');
+        const btnGroup = document.getElementById('modalBtns');
+        title.innerText = "정답 확인";
+        title.style.color = "#2d3436";
+        let aDisplay = formatNumber(answerA);
+        msg.innerHTML = `정답은 <b style="color:#d63031">y = ${aDisplay}x + ${answerB}</b> 였습니다.`;
+        btnGroup.innerHTML = `<button class="modal-btn" onclick="nextProblem()">다음 문제 👉</button>`;
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = 'none';
+        document.getElementById('inputA').focus();
+    }
+
+    function parseFraction(str) {
+        if (!str) return NaN;
+        if (str.includes('/')) {
+            const parts = str.split('/');
+            if (parts.length === 2) return parseFloat(parts[0]) / parseFloat(parts[1]);
+        }
+        return parseFloat(str);
+    }
+
+    function formatNumber(decimal) {
+        if (Math.abs(decimal - 0.5) < 0.001) return "1/2";
+        if (Math.abs(decimal + 0.5) < 0.001) return "-1/2";
+        if (Math.abs(decimal - 1/3) < 0.001) return "1/3";
+        if (Math.abs(decimal + 1/3) < 0.001) return "-1/3";
+        if (Math.abs(decimal - 2/3) < 0.001) return "2/3";
+        if (Math.abs(decimal + 2/3) < 0.001) return "-2/3";
+        if (Math.abs(decimal - 1.5) < 0.001) return "3/2";
+        if (Math.abs(decimal + 1.5) < 0.001) return "-3/2";
+        return Number.isInteger(decimal) ? decimal : decimal.toFixed(2);
+    }
+
+    function nextProblem() {
+        closeModal();
+        generateProblem();
+    }
+
+    generateProblem();
+
+</script>
+</body>
+</html>

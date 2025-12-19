@@ -48,10 +48,9 @@
         .canvas-wrapper {
             background: white; border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            padding: 15px; /* 패딩 최소화 */
+            padding: 15px; 
             margin-bottom: 20px;
         }
-        /* 캔버스 크기 CSS로 명시 */
         canvas { display: block; background: #fff; border-radius: 10px; }
 
         /* 입력 폼 */
@@ -108,6 +107,38 @@
         .btn-retry { background-color: #fdcb6e; color: #2d3436; box-shadow: 0 4px 0 #e1b12c; }
         .btn-check { background-color: #d63031; color: white; box-shadow: 0 4px 0 #c0392b; }
 
+        /* 5. 접이식 개념노트 스타일 */
+        .concept-wrapper {
+            width: 100%; max-width: 600px; margin: 30px auto;
+            box-sizing: border-box;
+            padding: 0 20px; /* 모바일 좌우 여백 */
+        }
+        .concept-btn {
+            width: 100%; padding: 15px 25px;
+            background: white; border: none; border-radius: 20px;
+            color: #2d3436; font-family: 'Jua'; font-size: 1.2rem;
+            cursor: pointer; text-align: left;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.2s;
+        }
+        .concept-btn:hover { background: #f1f2f6; transform: translateY(-2px); }
+        .concept-btn.active { 
+            background: #0984e3; color: white; 
+            border-radius: 20px 20px 0 0; 
+        }
+        
+        .concept-content {
+            max-height: 0; overflow: hidden; 
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            transition: max-height 0.3s ease-out;
+        }
+        .concept-inner { padding: 25px; line-height: 1.6; color: #2d3436; }
+        .arrow-icon { transition: transform 0.3s; }
+        .concept-btn.active .arrow-icon { transform: rotate(180deg); }
+
     </style>
 </head>
 <body>
@@ -123,7 +154,7 @@
         </div>
 
         <div class="canvas-wrapper">
-            <canvas id="graphCanvas" width="640" height="640" style="width:320px; height:320px;"></canvas>
+            <canvas id="graphCanvas" width="680" height="680" style="width:340px; height:340px;"></canvas>
         </div>
 
         <div class="input-area">
@@ -147,50 +178,55 @@
             </div>
         </div>
     </div>
-<section style="max-width: 700px; margin: 40px auto; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #2d3436;">
-        
-        <h2 style="border-bottom: 3px solid #74b9ff; padding-bottom: 10px; margin-bottom: 20px;">📘 선생님의 개념 노트</h2>
-        
-        <div style="line-height: 1.8; font-size: 1.1rem;">
-            <h3 style="color: #0984e3;">1. 일차함수의 기본형</h3>
-            <p>
-                일차함수는 보통 <b>y = ax + b</b> 형태로 나타냅니다.<br>
-                여기서 <b>a는 기울기</b>, <b>b는 y절편</b>을 의미합니다.
-            </p>
 
-            <h3 style="color: #0984e3; margin-top: 25px;">2. 그래프 보는 법 (게임 공략!)</h3>
-            <ul style="list-style-type: none; padding-left: 0;">
-                <li style="margin-bottom: 10px;">
-                    🎯 <b>y절편(b) 찾기:</b> y축과 만나는 점을 먼저 보세요. 그 점의 숫자가 바로 b입니다.
-                </li>
-                <li>
-                    📈 <b>기울기(a) 찾기:</b> 그래프가 오른쪽 위로 가면 (+), 오른쪽 아래로 가면 (-)입니다. x가 1 증가할 때 y가 얼만큼 변하는지 세어보세요!
-                </li>
-            </ul>
+    <div class="concept-wrapper">
+        <button class="concept-btn" onclick="toggleConcept()">
+            <span>📘 선생님의 개념 노트 (클릭!)</span>
+            <span class="arrow-icon">▼</span>
+        </button>
+        
+        <div class="concept-content" id="conceptBox">
+            <div class="concept-inner">
+                <h3 style="color: #0984e3; margin-top:0;">1. 일차함수의 기본형</h3>
+                <p>
+                    일차함수는 <b>y = ax + b</b> 형태로 나타냅니다.<br>
+                    여기서 <b>a는 기울기</b>, <b>b는 y절편</b>입니다.
+                </p>
 
-            <div style="background: #dfe6e9; padding: 15px; border-radius: 10px; margin-top: 20px; font-size: 0.95rem;">
-                💡 <b>Tip:</b> 문제를 틀려도 괜찮아요. '다시 풀기'를 눌러서 끈기 있게 도전해보세요!
+                <h3 style="color: #0984e3; margin-top: 20px;">2. 그래프 보는 꿀팁</h3>
+                <ul style="padding-left: 20px; margin-bottom: 0;">
+                    <li style="margin-bottom: 8px;">
+                        🎯 <b>y절편(b):</b> y축과 만나는 점을 먼저 찾으세요!
+                    </li>
+                    <li>
+                        📈 <b>기울기(a):</b> 그래프가 오른쪽 위로 가면 (+), 오른쪽 아래로 가면 (-)입니다.
+                    </li>
+                </ul>
+                <div style="background: #dfe6e9; padding: 12px; border-radius: 10px; margin-top: 20px; font-size: 0.9rem; text-align: center;">
+                    "틀려도 괜찮아요! 다시 풀기를 눌러 도전해보세요!"
+                </div>
             </div>
         </div>
+    </div>
 
-    </section>
-    
 <script>
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
     
-    // [수정] 캔버스 크기를 320px로 설정하고 여백 없이 꽉 채움
-    const WIDTH = 320; 
-    const HEIGHT = 320; 
+    // [설정] 캔버스 전체 크기 (340px)
+    const WIDTH = 340; 
+    const HEIGHT = 340; 
     ctx.scale(2, 2); 
 
     const CENTER_X = WIDTH / 2;
     const CENTER_Y = HEIGHT / 2;
     
-    const GRID_COUNT = 10; // -10 ~ 10 (총 20칸)
-    
-    // [핵심] 전체 너비를 20칸으로 나누어 눈금 크기 계산 (여백 없음)
-    const SCALE = WIDTH / (GRID_COUNT * 2); 
+    // [중요] 사방에 안전 여백(Padding)을 20px씩 둠 (화살표 잘림 방지)
+    const PADDING = 20;
+
+    const GRID_COUNT = 10; 
+    // 눈금 크기 계산 시 여백을 뺀 실제 그리기 영역을 기준으로 함
+    const SCALE = (WIDTH - PADDING * 2) / (GRID_COUNT * 2); 
 
     let answerA = 0; 
     let answerB = 0; 
@@ -217,7 +253,7 @@
     function drawGraph() {
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        // [모눈종이] - 캔버스 끝까지 꽉 차게 그림
+        // [모눈종이] - 여백 안쪽에만 그림
         ctx.strokeStyle = '#dfe6e9'; 
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -225,34 +261,43 @@
         // 수직선
         for (let i = -GRID_COUNT; i <= GRID_COUNT; i++) {
             let x = CENTER_X + i * SCALE;
-            // 0.5픽셀 보정으로 선명하게
             x = Math.round(x) + 0.5; 
-            ctx.moveTo(x, 0); ctx.lineTo(x, HEIGHT);
+            ctx.moveTo(x, PADDING); ctx.lineTo(x, HEIGHT - PADDING);
         }
         // 수평선
         for (let i = -GRID_COUNT; i <= GRID_COUNT; i++) {
             let y = CENTER_Y - i * SCALE;
             y = Math.round(y) + 0.5;
-            ctx.moveTo(0, y); ctx.lineTo(WIDTH, y);
+            ctx.moveTo(PADDING, y); ctx.lineTo(WIDTH - PADDING, y);
         }
         ctx.stroke();
 
-        // [축 그리기]
+        // [축 그리기] - 화살표는 여백 공간까지 나가도록 함
         ctx.strokeStyle = '#2d3436';
         ctx.lineWidth = 2;
         ctx.beginPath();
         
-        // x축 (끝까지)
-        ctx.moveTo(0, CENTER_Y); ctx.lineTo(WIDTH, CENTER_Y);
-        // 화살표
-        ctx.moveTo(WIDTH, CENTER_Y); ctx.lineTo(WIDTH - 8, CENTER_Y - 4);
-        ctx.moveTo(WIDTH, CENTER_Y); ctx.lineTo(WIDTH - 8, CENTER_Y + 4);
+        // x축 (여백 영역까지 침범하도록 길이 연장)
+        const AXIS_EXTEND = 10; 
+        
+        ctx.moveTo(PADDING - AXIS_EXTEND, CENTER_Y); 
+        ctx.lineTo(WIDTH - PADDING + AXIS_EXTEND, CENTER_Y);
+        
+        // x축 화살표
+        ctx.moveTo(WIDTH - PADDING + AXIS_EXTEND, CENTER_Y); 
+        ctx.lineTo(WIDTH - PADDING + AXIS_EXTEND - 8, CENTER_Y - 4);
+        ctx.moveTo(WIDTH - PADDING + AXIS_EXTEND, CENTER_Y); 
+        ctx.lineTo(WIDTH - PADDING + AXIS_EXTEND - 8, CENTER_Y + 4);
 
-        // y축 (끝까지)
-        ctx.moveTo(CENTER_X, HEIGHT); ctx.lineTo(CENTER_X, 0);
-        // 화살표
-        ctx.moveTo(CENTER_X, 0); ctx.lineTo(CENTER_X - 4, 8);
-        ctx.moveTo(CENTER_X, 0); ctx.lineTo(CENTER_X + 4, 8);
+        // y축 (여백 영역까지 침범)
+        ctx.moveTo(CENTER_X, HEIGHT - PADDING + AXIS_EXTEND); 
+        ctx.lineTo(CENTER_X, PADDING - AXIS_EXTEND);
+        
+        // y축 화살표
+        ctx.moveTo(CENTER_X, PADDING - AXIS_EXTEND); 
+        ctx.lineTo(CENTER_X - 4, PADDING - AXIS_EXTEND + 8);
+        ctx.moveTo(CENTER_X, PADDING - AXIS_EXTEND); 
+        ctx.lineTo(CENTER_X + 4, PADDING - AXIS_EXTEND + 8);
         ctx.stroke();
 
         // [텍스트 표시]
@@ -263,32 +308,37 @@
         ctx.textAlign = 'right'; ctx.textBaseline = 'top';
         ctx.fillText('O', CENTER_X - 5, CENTER_Y + 5);
         
-        // [수정] 축 이름 위치 (x를 위로, y를 오른쪽으로)
+        // 축 이름 (여백 공간에 표시)
         ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-        ctx.fillText('x', WIDTH - 5, CENTER_Y - 5); // x축 위
+        ctx.fillText('x', WIDTH - 5, CENTER_Y - 5); 
         
         ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        ctx.fillText('y', CENTER_X + 5, 5); // y축 옆
+        ctx.fillText('y', CENTER_X + 5, 5); 
 
-        // [숫자 표시] - 캔버스 끝에 닿지 않게 약간 안쪽으로
+        // [숫자 표시]
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillText('5', CENTER_X + 5 * SCALE, CENTER_Y + 5);
-        ctx.fillText('10', WIDTH - 10, CENTER_Y + 5); // 끝부분 조정
+        ctx.fillText('10', WIDTH - PADDING - 5, CENTER_Y + 5); 
         ctx.fillText('-5', CENTER_X - 5 * SCALE, CENTER_Y + 5);
-        ctx.fillText('-10', 10, CENTER_Y + 5); // 끝부분 조정
+        ctx.fillText('-10', PADDING + 5, CENTER_Y + 5); 
 
         ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
         ctx.fillText('5', CENTER_X - 5, CENTER_Y - 5 * SCALE);
-        ctx.fillText('10', CENTER_X - 5, 10); // 끝부분 조정
+        ctx.fillText('10', CENTER_X - 5, PADDING + 5);
         ctx.fillText('-5', CENTER_X - 5, CENTER_Y + 5 * SCALE);
-        ctx.fillText('-10', CENTER_X - 5, HEIGHT - 10); // 끝부분 조정
+        ctx.fillText('-10', CENTER_X - 5, HEIGHT - PADDING - 5); 
 
         // [함수 그래프]
+        // 클리핑 영역을 여백 안쪽으로 설정
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(PADDING, PADDING, WIDTH - PADDING * 2, HEIGHT - PADDING * 2);
+        ctx.clip();
+
         ctx.strokeStyle = '#e84118'; 
         ctx.lineWidth = 3;
         ctx.beginPath();
 
-        // 캔버스 전체 영역을 덮도록 충분히 길게 그림
         let startX = -GRID_COUNT - 5; 
         let startY = answerA * startX + answerB;
         let endX = GRID_COUNT + 5;
@@ -297,6 +347,8 @@
         ctx.moveTo(CENTER_X + startX * SCALE, CENTER_Y - startY * SCALE);
         ctx.lineTo(CENTER_X + endX * SCALE, CENTER_Y - endY * SCALE);
         ctx.stroke();
+        
+        ctx.restore();
     }
 
     // 3. 정답 확인
@@ -380,6 +432,20 @@
     function nextProblem() {
         closeModal();
         generateProblem();
+    }
+    
+    // 개념노트 토글 함수
+    function toggleConcept() {
+        const btn = document.querySelector('.concept-btn');
+        const content = document.getElementById('conceptBox');
+        
+        btn.classList.toggle('active');
+
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null; 
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px"; 
+        }
     }
 
     generateProblem();

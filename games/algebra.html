@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대수막대 마스터 클래스 (Final v4)</title>
+    <title>대수막대 마스터 클래스 (Final v5)</title>
     <style>
         /* 1. 기본 설정 */
         body {
@@ -25,6 +25,7 @@
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             justify-content: center; align-items: center;
             color: white; text-align: center;
+            position: relative; /* 홈 버튼 배치를 위해 */
         }
         #menuScreen h1 { font-size: 3.5rem; margin-bottom: 50px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
         .menu-btn {
@@ -37,6 +38,29 @@
         .btn-prac { background: #1dd1a1; color: #fff; }
         .btn-chall { background: #ee5253; color: #fff; }
         .menu-btn:hover { transform: scale(1.05); }
+
+        /* [추가] 메뉴 화면 전용 홈 버튼 스타일 */
+        .home-btn-absolute {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            text-decoration: none; /* a태그 밑줄 제거 */
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .home-btn-absolute:hover {
+            background: white;
+            color: #1e3c72;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
 
         /* 헤더 */
         header {
@@ -153,6 +177,8 @@
 <body>
 
     <div id="menuScreen" class="screen active">
+        <a href="../../index.html" class="home-btn-absolute">🏠 홈으로</a>
+
         <h1>📐 대수막대 마스터</h1>
         <button class="menu-btn btn-tuto" onclick="startGame('tutorial')">🐣 튜토리얼 (처음이라면)</button>
         <button class="menu-btn btn-prac" onclick="startGame('practice')">🏫 연습 모드 (기본)</button>

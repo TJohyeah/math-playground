@@ -8,8 +8,8 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3461285043596254"
      crossorigin="anonymous"></script>
         
-    <meta name="description" content="고등학교 선생님이 직접 만든 수학 게임 사이트. 대수막대, 좌표평면 게임 등으로 수학을 재미있게 배워보세요.">
-    <meta name="keywords" content="수학게임, 대수막대, 인수분해, 좌표평면, 수학놀이터, 에듀테크">
+    <meta name="description" content="고등학교 선생님이 직접 만든 수학 게임 사이트. 대수막대, 좌표평면, 원주각 게임 등으로 수학을 재미있게 배워보세요.">
+    <meta name="keywords" content="수학게임, 대수막대, 인수분해, 좌표평면, 원주각, 수학놀이터, 에듀테크">
 
     <meta name="google-site-verification" content="ItcZRE-eA29yC3l9okCdRhykHj9SJpwkQ-43Z_kNhp0" />
     <meta name="naver-site-verification" content="c973e5f489d43a82b1d8daa24effc70c20340701" />
@@ -55,6 +55,7 @@
             font-size: 1.8rem;
             color: var(--primary-color);
             display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
         }
         .menu { display: flex; gap: 30px; font-weight: bold; }
         .menu li a:hover { color: var(--primary-color); }
@@ -141,18 +142,12 @@
             margin-top: auto;
         }
 
-        /* [추가] 방문자 카운터 고정 스타일 */
+        /* 방문자 카운터 고정 스타일 */
         .visitor-badge {
-            position: fixed; /* 화면에 고정 */
-            bottom: 20px;    /* 바닥에서 20px 위 */
-            right: 20px;     /* 오른쪽에서 20px 안쪽 */
-            z-index: 9999;   /* 맨 위에 표시 */
-            opacity: 0.6;    /* 반투명하게 (잘 안 보이게) */
-            transition: opacity 0.3s; /* 마우스 올리면 부드럽게 */
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            opacity: 0.6; transition: opacity 0.3s;
         }
-        .visitor-badge:hover {
-            opacity: 1.0;    /* 마우스 올리면 선명하게 */
-        }
+        .visitor-badge:hover { opacity: 1.0; }
     </style>
 </head>
 <body>
@@ -160,7 +155,7 @@
     <nav>
         <a href="index.html" class="logo">📐 수학 놀이터</a>
         <ul class="menu">
-            <li><a href="#">홈</a></li>
+            <li><a href="index.html">홈</a></li>
             <li><a href="#">게임 소개</a></li>
             <li><a href="board.html">자유게시판</a></li>
         </ul>
@@ -218,37 +213,36 @@
                 </div>
             </div>
 
-            <div class="game-card" onclick="location.href='games/linear_func.html'">
-                <div class="card-thumb" style="background: #ffeaa7; font-size: 3rem;">🕵️</div>
+            <div class="game-card" onclick="location.href='games/linear-func/index.html'">
+                <div class="card-thumb" style="background: #74b9ff; font-size: 3rem;">🕵️</div>
                 <div class="card-content">
-                    <div class="card-title">함수 수사대: 일차함수 식을찾아라!</div>
+                    <div class="card-title">함수 수사대: 일차함수</div>
                     <div class="card-desc">
                         그래프를 보고 식을 완성하라! 숨겨진 <b>기울기(a)</b>와 <b>y절편(b)</b>을 찾는 추리 게임
                     </div>
-                    <a href="games/linear_func.html" class="play-btn">게임 시작하기 ▶</a>
+                    <a href="games/linear-func/index.html" class="play-btn">게임 시작하기 ▶</a>
                 </div>
             </div>
-            
-            <div class="game-card coming-soon">
-                <div class="card-thumb">📈</div>
+
+            <div class="game-card" onclick="location.href='games/circle-angle/index.html'">
+                <div class="card-thumb" style="background: #a29bfe; font-size: 3rem;">🔵</div>
                 <div class="card-content">
-                    <div class="card-title"> 원주각과 중심각 사이의 관계</div>
+                    <div class="card-title">원주각과 중심각</div>
                     <div class="card-desc">
-                        원주각과 중심각 사이의 관계를 살펴봅시다!
+                        점을 움직여보세요! <strong>중심각이 원주각의 2배</strong>가 되는 성질을 눈으로 확인하는 실험실
                     </div>
-                    <span class="play-btn">준비중...</span>
+                    <a href="games/circle-angle/index.html" class="play-btn">게임 시작하기 ▶</a>
                 </div>
             </div>
-        </div>
             
             <div class="game-card coming-soon">
                 <div class="card-thumb">📈</div>
                 <div class="card-content">
                     <div class="card-title">함수 그래프 챌린지</div>
                     <div class="card-desc">
-                        일차함수부터 이차함수까지! 그래프 개형을 맞춰보세요.
+                        이차함수, 삼각비 등 더 많은 수학 주제들이 준비되고 있습니다.
                     </div>
-                    <a href="games/circle-angle.html" class="play-btn">게임 시작하기 ▶</a>
+                    <span class="play-btn">준비중...</span>
                 </div>
             </div>
         </div>

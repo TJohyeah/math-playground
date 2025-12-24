@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수식의 연금술사 | Number Alchemist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 공통 설정 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at 50% 30%, #2c3e50, #000000); /* 어두운 연금술 테마 */
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; user-select: none; color: white;
+        }
+
+        /* 2. 헤더 */
+        header {
+            background: rgba(255, 255, 255, 0.1);
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(10px); position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: transparent; border: 2px solid white; color: white;
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; 
+            font-family: 'Jua'; text-decoration: none; font-size: 1rem;
+            transition: 0.3s;
+        }
+        .home-btn:hover { background: white; color: #2c3e50; }
+        h1 { margin: 0; font-size: 1.8rem; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
+
+        /* 3. 게임 영역 */
+        .container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 500px; padding: 20px; box-sizing: border-box;
+        }
+
+        /* 난이도 선택 */
+        .level-selector {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        .level-btn {
+            background: rgba(255,255,255,0.1); border: 2px solid #bdc3c7; color: #bdc3c7;
+            padding: 8px 15px; border-radius: 15px; cursor: pointer; font-family: 'Jua';
+        }
+        .level-btn.active {
+            background: #f1c40f; color: #2c3e50; border-color: #f1c40f; font-weight: bold;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+        }
+
+        /* 문제 표시판 */
+        .quest-board {
+            background: rgba(0,0,0,0.6); border: 2px solid #f1c40f;
+            border-radius: 20px; padding: 20px; width: 100%; text-align: center;
+            margin-bottom: 20px; box-shadow: 0 0 20px rgba(241, 196, 15, 0.2);
+        }
+        .quest-title { font-size: 1.2rem; color: #bdc3c7; margin-bottom: 10px; }
+        .target-number { font-size: 4rem; color: #fff; text-shadow: 0 0 15px white; margin: 10px 0; }
+        .quest-rule { font-size: 1.3rem; color: #f39c12; }
+        .highlight { color: #e74c3c; font-size: 1.5rem; margin: 0 5px; }
+
+        /* 입력 화면 */
+        .input-display {
+            width: 100%; height: 60px; background: white; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: #333; margin-bottom: 20px;
+            overflow-x: auto; white-space: nowrap; padding: 0 10px;
+            border: 4px solid #34495e;
+        }
+
+        /* 키패드 */
+        .keypad {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%;
+        }
+        .key-btn {
+            background: #34495e; color: white; border: none; border-radius: 10px;
+            height: 55px; font-size: 1.4rem; cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 4px 0 #2c3e50; active: translateY(4px);
+            transition: 0.1s;
+        }
+        .key-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 버튼 색상 구분 */
+        .btn-num { background: #e67e22; box-shadow: 0 4px 0 #d35400; font-size: 1.8rem; } /* 숫자 */
+        .btn-op { background: #3498db; box-shadow: 0 4px 0 #2980b9; } /* 연산자 */
+        .btn-action { background: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; } /* 지우기 */
+        .btn-submit { 
+            grid-column: span 2; background: #2ecc71; box-shadow: 0 4px 0 #27ae60; 
+            font-size: 1.5rem;
+        }
+
+        /* 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { 
+            background: white; padding: 30px; border-radius: 25px; 
+            text-align: center; width: 320px; color: #333;
+            box-shadow: 0 0 30px rgba(255,255,255,0.5); border: 4px solid #f1c40f;
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-btn { 
+            background-color: #2c3e50; color: white; padding: 10px 25px; 
+            border: none; border-radius: 20px; cursor: pointer; 
+            font-family: 'Jua'; font-size: 1.2rem; margin-top: 15px;
+        }
+
+        /* 4. 접이식 개념노트 */
+        .concept-wrapper { width: 100%; max-width: 500px; margin: 30px auto; padding: 0 20px; box-sizing: border-box;}
+        .concept-btn {
+            width: 100%; padding: 15px 25px; background: white; border: none; border-radius: 20px;
+            color: #2d3436; font-family: 'Jua'; font-size: 1.2rem; cursor: pointer; text-align: left;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .concept-content {
+            max-height: 0; overflow: hidden; background: rgba(255, 255, 255, 0.9);
+            border-radius: 0 0 20px 20px; transition: max-height 0.3s ease-out; color: #333;
+        }
+        .concept-inner { padding: 25px; line-height: 1.6; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>⚗️ 수식의 연금술사</h1>
+    </header>
+
+    <div class="container">
+        <div class="level-selector">
+            <button class="level-btn active" onclick="setLevel(1)">초급</button>
+            <button class="level-btn" onclick="setLevel(2)">중급</button>
+            <button class="level-btn" onclick="setLevel(3)">고급</button>
+        </div>
+
+        <div class="quest-board">
+            <div class="quest-title">목표 숫자를 만드세요!</div>
+            <div class="target-number" id="targetNum">?</div>
+            <div class="quest-rule">
+                숫자 <span class="highlight" id="baseNum">5</span>를<br>
+                정확히 <span class="highlight" id="reqCount">3</span>번 사용하세요.
+            </div>
+        </div>
+
+        <div class="input-display" id="inputDisplay"></div>
+
+        <div class="keypad" id="keypad">
+            </div>
+    </div>
+
+    <div class="concept-wrapper">
+        <button class="concept-btn" onclick="toggleConcept()">
+            <span>📘 연금술 가이드 (규칙)</span> <span>▼</span>
+        </button>
+        <div class="concept-content" id="conceptBox">
+            <div class="concept-inner">
+                <h3>1. 게임 규칙</h3>
+                <ul>
+                    <li>제시된 숫자만 사용할 수 있습니다.</li>
+                    <li>제시된 횟수만큼 정확히 써야 합니다.</li>
+                    <li><b>55</b> 처럼 붙여 쓰면 2개를 쓴 것으로 칩니다.</li>
+                </ul>
+                <h3>2. 연산 기호</h3>
+                <ul>
+                    <li><b>^</b> : 거듭제곱 (예: 2^3 = 8)</li>
+                    <li><b>√</b> : 제곱근 (예: √4 = 2)</li>
+                    <li><b>!</b> : 팩토리얼 (예: 3! = 3×2×1 = 6)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">성공! 🎉</h2>
+            <p id="modalMsg">완벽한 연금술입니다!</p>
+            <button class="modal-btn" onclick="nextProblem()">다음 문제 👉</button>
+        </div>
+    </div>
+
+<script>
+    let currentLevel = 1;
+    let baseNumber = 0;
+    let requiredCount = 0;
+    let targetNumber = 0;
+    let currentExpression = "";
+
+    // 팩토리얼 함수 구현
+    function factorial(n) {
+        if (n < 0) return NaN;
+        if (n === 0 || n === 1) return 1;
+        let result = 1;
+        for(let i = 2; i <= n; i++) result *= i;
+        return result;
+    }
+
+    // 초기화
+    function init() {
+        renderKeypad();
+        generateProblem();
+    }
+
+    function setLevel(lv) {
+        currentLevel = lv;
+        document.querySelectorAll('.level-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', idx + 1 === lv);
+        });
+        renderKeypad();
+        generateProblem();
+    }
+
+    function renderKeypad() {
+        const keypad = document.getElementById('keypad');
+        keypad.innerHTML = '';
+
+        // 기본 연산자
+        const basics = ['(', ')', '/', '*', '-', '+'];
+        
+        // 숫자 버튼 (현재 베이스 넘버)
+        const numBtn = `<button class="key-btn btn-num" onclick="addInput('${baseNumber}')">${baseNumber}</button>`;
+        
+        // 레벨별 추가 버튼
+        let extras = [];
+        if (currentLevel >= 2) extras.push('^');
+        if (currentLevel >= 3) {
+            extras.push('√');
+            extras.push('!');
+        }
+
+        // 배치 로직
+        // 1. 숫자 버튼은 항상 잘 보이는 곳에
+        // 2. 나머지는 그리드에 배치
+        
+        // 첫 줄: 초기화, 괄호, 나누기
+        keypad.innerHTML += `<button class="key-btn btn-action" onclick="clearInput()">C</button>`;
+        keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('(')">(</button>`;
+        keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput(')')">)</button>`;
+        keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('/')">÷</button>`;
+
+        // 둘째 줄: 7 8 9 곱하기 (여기서는 숫자키가 하나뿐이므로 구조 변경)
+        // [숫자] [^] [!] [*]
+        keypad.innerHTML += numBtn; // 메인 숫자
+        
+        if(currentLevel >= 2) keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('^')">^</button>`;
+        else keypad.innerHTML += `<button class="key-btn btn-op" style="opacity:0.3; cursor:default;"> </button>`; // 빈칸
+
+        if(currentLevel >= 3) keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('!')">!</button>`;
+        else keypad.innerHTML += `<button class="key-btn btn-op" style="opacity:0.3; cursor:default;"> </button>`; // 빈칸
+
+        keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('*')">×</button>`;
+
+        // 셋째 줄: [루트] [백스페이스] [+] [-]
+        if(currentLevel >= 3) keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('√')">√</button>`;
+        else keypad.innerHTML += `<button class="key-btn btn-op" style="opacity:0.3; cursor:default;"> </button>`;
+
+        keypad.innerHTML += `<button class="key-btn btn-action" onclick="backspace()">⌫</button>`;
+        keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('+')">+</button>`;
+        keypad.innerHTML += `<button class="key-btn btn-op" onclick="addInput('-')">-</button>`;
+
+        // 넷째 줄: 제출 (크게)
+        keypad.innerHTML += `<button class="key-btn btn-submit" style="grid-column: span 4;" onclick="checkAnswer()">연성하기 (정답확인)</button>`;
+    }
+
+    // [핵심] 풀 수 있는 문제 생성기
+    function generateProblem() {
+        // 1. 사용할 숫자(1~9)와 개수(3~5) 랜덤 선택
+        baseNumber = Math.floor(Math.random() * 9) + 1; 
+        requiredCount = Math.floor(Math.random() * 3) + 3; // 3, 4, 5개
+
+        // 2. 키패드 다시 그려서 숫자 버튼 업데이트
+        renderKeypad();
+
+        // 3. 랜덤 수식 생성하여 타겟 넘버 결정 (무조건 풀 수 있게)
+        let found = false;
+        let attempts = 0;
+
+        while(!found && attempts < 100) {
+            try {
+                // 랜덤한 수식을 만들어봄 (예: 5 + 5 - 5)
+                let tempExpr = generateRandomExpression(baseNumber, requiredCount, currentLevel);
+                let result = evaluateExpression(tempExpr);
+
+                // 결과가 1~20 사이의 정수이면 채택
+                if (Number.isInteger(result) && result >= 1 && result <= 20) {
+                    targetNumber = result;
+                    found = true;
+                    // console.log("Solution hint:", tempExpr, "=", result); // 디버깅용 정답
+                }
+            } catch (e) {}
+            attempts++;
+        }
+
+        // 만약 100번 시도해도 실패하면 기본값으로 설정 (안전장치)
+        if (!found) {
+            baseNumber = 2; requiredCount = 3; targetNumber = 4; // 2+2=4 (간단)
+        }
+
+        // 화면 갱신
+        document.getElementById('baseNum').innerText = baseNumber;
+        document.getElementById('reqCount').innerText = requiredCount;
+        document.getElementById('targetNum').innerText = targetNumber;
+        clearInput();
+    }
+
+    // 랜덤 수식 만들기 (내부 로직용)
+    function generateRandomExpression(num, count, level) {
+        // 단순하게 숫자 사이에 랜덤 연산자를 끼워넣는 방식
+        let ops = ['+', '-', '*'];
+        if (level >= 2) ops.push('/'); // 나누기는 정수 아닐 확률 높아서 조심스럽게
+        
+        let expr = String(num);
+        for(let i=1; i<count; i++) {
+            let op = ops[Math.floor(Math.random() * ops.length)];
+            expr += op + num;
+        }
+        return expr; // 괄호나 루트 없이 단순 사칙연산으로만 타겟을 만듦 (최소한의 해답 존재 보장)
+    }
+
+    // 입력 관리
+    function addInput(char) {
+        // 루트는 앞에, 팩토리얼은 뒤에 등 문법 체크는 나중에 평가할 때 함
+        currentExpression += char;
+        updateDisplay();
+    }
+    function clearInput() {
+        currentExpression = "";
+        updateDisplay();
+    }
+    function backspace() {
+        currentExpression = currentExpression.slice(0, -1);
+        updateDisplay();
+    }
+    function updateDisplay() {
+        // 화면에는 곱하기 나누기 등을 예쁘게 표시
+        let displayHtml = currentExpression
+            .replace(/\*/g, '×')
+            .replace(/\//g, '÷');
+        document.getElementById('inputDisplay').innerText = displayHtml;
+    }
+
+    // [중요] 정답 체크 로직
+    function checkAnswer() {
+        const modal = document.getElementById('resultModal');
+        const title = document.getElementById('modalTitle');
+        const msg = document.getElementById('modalMsg');
+
+        // 1. 숫자 개수 체크
+        // 입력된 문자열에서 'baseNumber'만 추출해서 개수 세기
+        let count = 0;
+        for (let char of currentExpression) {
+            if (char === String(baseNumber)) count++;
+            // 다른 숫자가 있으면 바로 오답 처리
+            else if (/[0-9]/.test(char)) {
+                showModal("오답! 💥", `숫자는 ${baseNumber}만 쓸 수 있어요!`);
+                return;
+            }
+        }
+
+        if (count !== requiredCount) {
+            showModal("실패 📉", `숫자 ${baseNumber}를 ${requiredCount}번 써야 해요.<br>(현재 ${count}번 사용)`);
+            return;
+        }
+
+        // 2. 수식 계산
+        try {
+            let result = evaluateExpression(currentExpression);
+            
+            // 부동소수점 오차 처리 (예: 1.0000000002 -> 1)
+            result = Math.round(result * 100000) / 100000;
+
+            if (result === targetNumber) {
+                showModal("성공! 🎉", `연금술 대성공!<br>${currentExpression.replace(/\*/g,'×')} = ${result}`, true);
+            } else {
+                showModal("실패 ☁️", `결과가 다릅니다.<br>만들어진 숫자: ${result}`);
+            }
+        } catch (e) {
+            showModal("오류 ⚠️", "수식이 올바르지 않습니다.");
+        }
+    }
+
+    // 수식 계산기 (파서)
+    function evaluateExpression(expr) {
+        // 1. 팩토리얼 처리: 3! -> factorial(3)
+        // 정규식으로 숫자 뒤에 !가 오는 것을 찾음
+        let parsed = expr;
+        // 반복적으로 팩토리얼 처리 (3!!) 등은 일단 단순 치환으로 처리
+        while (parsed.includes('!')) {
+            parsed = parsed.replace(/(\d+)!/g, 'factorial($1)');
+            // 괄호 뒤 팩토리얼 (!가 없어질 때까지)
+            parsed = parsed.replace(/\)!/g, ')'); // 괄호 팩토리얼은 복잡해서 일단 무시하거나 에러 처리
+            if(parsed.includes('!')) break; // 무한루프 방지 (단순 숫자 팩토리얼만 지원)
+        }
+
+        // 2. 루트 처리: √9 -> Math.sqrt(9)
+        // 루트 뒤에 숫자나 괄호가 옴
+        parsed = parsed.replace(/√(\d+)/g, 'Math.sqrt($1)');
+        parsed = parsed.replace(/√\(/g, 'Math.sqrt(');
+
+        // 3. 거듭제곱: ^ -> **
+        parsed = parsed.replace(/\^/g, '**');
+
+        // 4. 보안 계산 (Function 생성자 사용)
+        // factorial 함수를 전역에서 쓸 수 있게 해둠
+        return new Function('return ' + parsed)();
+    }
+
+    function showModal(titleText, msgText, isSuccess = false) {
+        const modal = document.getElementById('resultModal');
+        document.getElementById('modalTitle').innerText = titleText;
+        document.getElementById('modalMsg').innerHTML = msgText;
+        
+        const btn = document.querySelector('.modal-btn');
+        if(isSuccess) {
+            document.getElementById('modalTitle').style.color = '#27ae60';
+            btn.innerText = "다음 문제 👉";
+            btn.onclick = nextProblem;
+        } else {
+            document.getElementById('modalTitle').style.color = '#c0392b';
+            btn.innerText = "다시 도전 💪";
+            btn.onclick = closeModal;
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = 'none';
+    }
+
+    function nextProblem() {
+        closeModal();
+        generateProblem();
+    }
+
+    function toggleConcept() {
+        const content = document.getElementById('conceptBox');
+        if (content.style.maxHeight) content.style.maxHeight = null;
+        else content.style.maxHeight = content.scrollHeight + "px";
+    }
+
+    // 시작
+    init();
+
+</script>
+</body>
+</html>

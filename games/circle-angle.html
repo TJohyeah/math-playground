@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원주각과 중심각 | Inscribed & Central Angles</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 공통 설정 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at 50% 30%, #a29bfe, #6c5ce7); /* 보라색 테마 */
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; user-select: none;
+        }
+
+        /* 2. 헤더 */
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative;
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: #2d3436; color: white; border: none;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; 
+            font-family: 'Jua'; text-decoration: none; font-size: 1rem;
+        }
+        h1 { margin: 0; font-size: 1.8rem; color: #2d3436; }
+
+        /* 3. 게임 영역 */
+        .container {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; width: 100%; max-width: 600px;
+            padding: 20px; box-sizing: border-box;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 30px; border-radius: 20px; margin-bottom: 20px;
+            text-align: center; border: 2px solid white; color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%; max-width: 400px;
+        }
+        .angle-display {
+            font-size: 1.5rem; margin: 5px 0;
+            display: flex; justify-content: space-between;
+        }
+        .angle-val { font-weight: bold; font-size: 1.8rem; }
+        .red-text { color: #ff7675; text-shadow: 1px 1px 0 #fff; } /* 중심각 색 */
+        .blue-text { color: #74b9ff; text-shadow: 1px 1px 0 #fff; } /* 원주각 색 */
+
+        /* 캔버스 래퍼 */
+        .canvas-wrapper {
+            background: white; border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 20px; position: relative;
+        }
+        canvas { display: block; border-radius: 20px; cursor: pointer; }
+
+        /* 4. 접이식 개념노트 */
+        .concept-wrapper {
+            width: 100%; max-width: 600px; margin: 30px auto;
+            box-sizing: border-box; padding: 0 20px;
+        }
+        .concept-btn {
+            width: 100%; padding: 15px 25px;
+            background: white; border: none; border-radius: 20px;
+            color: #2d3436; font-family: 'Jua'; font-size: 1.2rem;
+            cursor: pointer; text-align: left;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.2s;
+        }
+        .concept-btn:hover { background: #f1f2f6; transform: translateY(-2px); }
+        .concept-btn.active { 
+            background: #6c5ce7; color: white; 
+            border-radius: 20px 20px 0 0; 
+        }
+        
+        .concept-content {
+            max-height: 0; overflow: hidden; 
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            transition: max-height 0.3s ease-out;
+        }
+        .concept-inner { padding: 25px; line-height: 1.6; color: #2d3436; }
+        .arrow-icon { transition: transform 0.3s; }
+        .concept-btn.active .arrow-icon { transform: rotate(180deg); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>🔵 원주각과 중심각</h1>
+    </header>
+
+    <div class="container">
+        
+        <div class="info-panel">
+            <div class="angle-display">
+                <span style="display:flex; align-items:center;">🔴 중심각 (∠AOB)</span>
+                <span class="angle-val red-text" id="centerAngle">--°</span>
+            </div>
+            <div class="angle-display">
+                <span style="display:flex; align-items:center;">🔵 원주각 (∠APB)</span>
+                <span class="angle-val blue-text" id="inscribedAngle">--°</span>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="geoCanvas" width="600" height="600" style="width:300px; height:300px;"></canvas>
+            <div style="text-align: center; margin-top: 10px; color: #b2bec3; font-size: 0.9rem;">
+                * 점 A, B, P를 드래그해서 움직여보세요!
+            </div>
+        </div>
+
+    </div>
+
+    <div class="concept-wrapper">
+        <button class="concept-btn" onclick="toggleConcept()">
+            <span>📘 선생님의 개념 노트 (클릭!)</span>
+            <span class="arrow-icon">▼</span>
+        </button>
+        
+        <div class="concept-content" id="conceptBox">
+            <div class="concept-inner">
+                <h3 style="color: #6c5ce7; margin-top:0;">1. 원주각과 중심각의 관계</h3>
+                <p>
+                    한 원에서 <b>같은 호</b>에 대한 <b>원주각의 크기</b>는 <b>중심각의 크기의 1/2</b>입니다.<br>
+                    반대로, 중심각의 크기는 원주각의 2배가 되겠죠?
+                </p>
+                <div style="background:#dfe6e9; padding:10px; border-radius:10px; text-align:center; font-weight:bold; color:#2d3436; margin: 15px 0;">
+                    ∠AOB = 2 × ∠APB
+                </div>
+
+                <h3 style="color: #6c5ce7; margin-top: 20px;">2. 원주각의 성질</h3>
+                <p>
+                    호 AB가 고정되어 있다면, 점 P가 원 위 어디에 있든(같은 호 쪽이 아니라면) <b>원주각의 크기는 항상 일정</b>합니다.<br>
+                    점 P를 드래그해서 직접 확인해보세요!
+                </p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('geoCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 고해상도 처리
+    const WIDTH = 300;
+    const HEIGHT = 300;
+    const DPI = 2;
+    canvas.width = WIDTH * DPI;
+    canvas.height = HEIGHT * DPI;
+    ctx.scale(DPI, DPI);
+
+    // 중심 좌표 및 반지름
+    const CX = WIDTH / 2;
+    const CY = HEIGHT / 2;
+    const R = 120; // 원의 반지름
+
+    // 점들의 각도 (라디안) - 초기 위치 설정
+    // 0도는 3시 방향, 시계방향으로 증가
+    let angleA = Math.PI * 0.8; // 144도 위치
+    let angleB = Math.PI * 2.2; // 396도 (36도) 위치
+    let angleP = Math.PI * 1.5; // 270도 (위쪽) 위치
+
+    let draggingPoint = null; // 'A', 'B', 'P'
+
+    // 마우스/터치 이벤트
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function isNear(pos, angle) {
+        const px = CX + R * Math.cos(angle);
+        const py = CY + R * Math.sin(angle);
+        const dist = Math.hypot(pos.x - px, pos.y - py);
+        return dist < 20; // 터치 범위 20px
+    }
+
+    function updateAngle(pos) {
+        // 중심에서 마우스 위치까지의 각도 계산 (atan2)
+        return Math.atan2(pos.y - CY, pos.x - CX);
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('touchstart', startDrag, {passive: false});
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag, {passive: false});
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+
+    function startDrag(e) {
+        const pos = getMousePos(e);
+        if (isNear(pos, angleA)) draggingPoint = 'A';
+        else if (isNear(pos, angleB)) draggingPoint = 'B';
+        else if (isNear(pos, angleP)) draggingPoint = 'P';
+        
+        if(draggingPoint) e.preventDefault(); // 스크롤 방지
+    }
+
+    function drag(e) {
+        if (!draggingPoint) return;
+        e.preventDefault();
+        const pos = getMousePos(e);
+        const newAngle = updateAngle(pos);
+
+        if (draggingPoint === 'A') angleA = newAngle;
+        else if (draggingPoint === 'B') angleB = newAngle;
+        else if (draggingPoint === 'P') angleP = newAngle;
+
+        draw();
+    }
+
+    function endDrag() {
+        draggingPoint = null;
+    }
+
+    // 그리기 함수들
+    function draw() {
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+        // 1. 원 그리기
+        ctx.beginPath();
+        ctx.arc(CX, CY, R, 0, Math.PI * 2);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#dfe6e9';
+        ctx.stroke();
+
+        // 좌표 계산
+        const Ax = CX + R * Math.cos(angleA);
+        const Ay = CY + R * Math.sin(angleA);
+        const Bx = CX + R * Math.cos(angleB);
+        const By = CY + R * Math.sin(angleB);
+        const Px = CX + R * Math.cos(angleP);
+        const Py = CY + R * Math.sin(angleP);
+
+        // 2. 중심각 영역 (부채꼴) 채우기 - 빨강
+        // 항상 작은 쪽 각을 칠하기 위해 계산
+        let startAngle = angleA;
+        let endAngle = angleB;
+        
+        // 각도 정규화 및 사이각 계산
+        let diff = endAngle - startAngle;
+        while (diff <= -Math.PI) diff += 2*Math.PI;
+        while (diff > Math.PI) diff -= 2*Math.PI;
+
+        ctx.beginPath();
+        ctx.moveTo(CX, CY);
+        // 호를 그릴 때 방향 설정 (작은 각 쪽으로)
+        if (diff > 0) {
+            ctx.arc(CX, CY, R, startAngle, endAngle);
+        } else {
+            ctx.arc(CX, CY, R, startAngle, endAngle, true);
+        }
+        ctx.fillStyle = 'rgba(255, 118, 117, 0.2)'; // 연한 빨강
+        ctx.fill();
+
+        // 3. 선 그리기
+        // 중심각 선 (OA, OB)
+        ctx.beginPath();
+        ctx.moveTo(Ax, Ay); ctx.lineTo(CX, CY); ctx.lineTo(Bx, By);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ff7675'; // 빨강
+        ctx.stroke();
+
+        // 원주각 선 (PA, PB)
+        ctx.beginPath();
+        ctx.moveTo(Ax, Ay); ctx.lineTo(Px, Py); ctx.lineTo(Bx, By);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#74b9ff'; // 파랑
+        ctx.stroke();
+
+        // 4. 점 그리기
+        drawPoint(CX, CY, 'O', '#2d3436');
+        drawPoint(Ax, Ay, 'A', '#ff7675');
+        drawPoint(Bx, By, 'B', '#ff7675');
+        drawPoint(Px, Py, 'P', '#74b9ff');
+
+        // 5. 각도 계산 및 표시
+        updateInfo(diff);
+    }
+
+    function drawPoint(x, y, label, color) {
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+
+        // 라벨
+        ctx.fillStyle = '#2d3436';
+        ctx.font = 'bold 14px sans-serif';
+        // 중심에서 점 방향으로 약간 띄워서 글씨 쓰기
+        const dx = x - CX;
+        const dy = y - CY;
+        const dist = Math.hypot(dx, dy);
+        let lx = x, ly = y;
+        
+        if(dist > 0) {
+            lx = x + (dx/dist) * 20;
+            ly = y + (dy/dist) * 20;
+        } else {
+            ly += 20; // 원점
+        }
+        
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, lx, ly);
+    }
+
+    function updateInfo(radDiff) {
+        // 중심각 크기 (항상 양수, 0~180도 사이로 표현)
+        // 만약 180도가 넘어가면 반대쪽 각을 보여줌 (문제 단순화)
+        let centerDeg = Math.abs(radDiff * 180 / Math.PI);
+        if (centerDeg > 180) centerDeg = 360 - centerDeg;
+
+        // 원주각 계산 (벡터 내적 이용)
+        // PA 벡터, PB 벡터
+        const Ax = R * Math.cos(angleA), Ay = R * Math.sin(angleA);
+        const Bx = R * Math.cos(angleB), By = R * Math.sin(angleB);
+        const Px = R * Math.cos(angleP), Py = R * Math.sin(angleP);
+
+        const PA = { x: Ax - Px, y: Ay - Py };
+        const PB = { x: Bx - Px, y: By - Py };
+
+        const magPA = Math.hypot(PA.x, PA.y);
+        const magPB = Math.hypot(PB.x, PB.y);
+
+        // 내적 공식: A·B = |A||B|cosθ
+        let cosTheta = (PA.x * PB.x + PA.y * PB.y) / (magPA * magPB);
+        // 부동소수점 오차 보정
+        if (cosTheta > 1) cosTheta = 1;
+        if (cosTheta < -1) cosTheta = -1;
+
+        let inscribedRad = Math.acos(cosTheta);
+        let inscribedDeg = inscribedRad * 180 / Math.PI;
+
+        // [교육적 처리] 
+        // 점 P가 호 AB 위에 있어서 원주각이 둔각이 되는 경우(180 - 중심각/2)도 있음
+        // 여기서는 '같은 호'에 대한 원주각만 다루는 게 일반적이므로
+        // 계산된 원주각이 중심각의 절반과 근사하면 절반 값으로 딱 떨어지게 보여줌
+        
+        const halfCenter = centerDeg / 2;
+        
+        // 화면 표시용 (소수점 제거)
+        let displayCenter = Math.round(centerDeg);
+        let displayInscribed = Math.round(inscribedDeg);
+
+        // 보정: 만약 P가 minor arc에 있어서 각이 합쳐서 180도가 되는 상황이면
+        // 그대로 보여주고, major arc에 있어서 1/2 관계면 정확히 1/2로 보여줌.
+        // (사용자가 헷갈리지 않게 오차 무시)
+        if (Math.abs(displayInscribed - displayCenter/2) < 2) {
+            displayInscribed = displayCenter / 2; // 정확히 절반으로 표시
+        }
+
+        document.getElementById('centerAngle').innerText = displayCenter + "°";
+        document.getElementById('inscribedAngle').innerText = displayInscribed + "°";
+        
+        // P가 반대편(minor arc)으로 넘어가면 빨간 경고? (선택사항)
+        // 일단은 있는 그대로 보여주는 것이 탐구에 좋음
+    }
+
+    function toggleConcept() {
+        const btn = document.querySelector('.concept-btn');
+        const content = document.getElementById('conceptBox');
+        btn.classList.toggle('active');
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null; 
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px"; 
+        }
+    }
+
+    // 초기 그리기
+    draw();
+
+</script>
+</body>
+</html>

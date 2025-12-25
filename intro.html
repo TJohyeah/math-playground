@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게임 소개 & 활동지 | 수학 놀이터</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://TJohyeah.github.io/math-playground/favicon.png">
+    
+    <style>
+        /* 1. 기본 테마 설정 */
+        :root {
+            --primary: #4a69bd;
+            --secondary: #f6b93b;
+            --bg: #f0f4f8;
+            --text: #2d3436;
+        }
+        body { margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; padding: 0; margin: 0; }
+
+        /* 2. 네비게이션 */
+        nav {
+            background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 15px 40px;
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-family: 'Jua'; font-size: 1.8rem; color: var(--primary); }
+        .menu { display: flex; gap: 30px; font-weight: bold; }
+        .menu li a:hover { color: var(--primary); }
+        .active-menu { color: var(--primary); border-bottom: 3px solid var(--secondary); }
+
+        /* 3. 헤더 */
+        .page-header {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white; text-align: center; padding: 60px 20px; margin-bottom: 40px;
+        }
+        .page-header h1 { font-family: 'Jua'; font-size: 2.5rem; margin: 0; }
+        .page-header p { font-size: 1.1rem; opacity: 0.9; margin-top: 10px; }
+
+        /* 4. 소개 카드 레이아웃 */
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px 80px 20px; }
+        
+        .intro-card {
+            background: white; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 40px;
+            display: flex; flex-direction: column; border: 1px solid #eee;
+        }
+        
+        .card-header {
+            padding: 20px 30px; background: #f8f9fa; border-bottom: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .game-title { font-family: 'Jua'; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .play-link {
+            background: var(--primary); color: white; padding: 8px 20px; border-radius: 20px;
+            font-size: 0.9rem; font-weight: bold; transition: 0.2s;
+        }
+        .play-link:hover { background: #3c5aa0; transform: translateY(-2px); }
+
+        .card-body { padding: 30px; display: flex; flex-wrap: wrap; gap: 30px; }
+        .text-section { flex: 2; min-width: 300px; }
+        .download-section { 
+            flex: 1; min-width: 250px; background: #fff8e1; border-radius: 15px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            border: 2px dashed #ffeaa7;
+        }
+
+        h3 { color: #2d3436; margin-top: 0; margin-bottom: 10px; font-size: 1.2rem; border-left: 4px solid var(--secondary); padding-left: 10px; }
+        p { line-height: 1.7; color: #636e72; font-size: 0.95rem; margin-bottom: 20px; }
+
+        .download-btn {
+            background: #27ae60; color: white; padding: 12px 25px; border-radius: 10px;
+            font-weight: bold; display: inline-flex; align-items: center; gap: 8px;
+            transition: 0.2s; box-shadow: 0 4px 0 #219150; margin-top: 10px; width: 80%; justify-content: center;
+        }
+        .download-btn:hover { transform: translateY(-2px); }
+        .download-btn:active { transform: translateY(2px); box-shadow: none; }
+        .file-info { font-size: 0.8rem; color: #888; margin-top: 8px; }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">📐 수학 놀이터</a>
+        <ul class="menu">
+            <li><a href="index.html">홈</a></li>
+            <li><a href="intro.html" class="active-menu">게임 소개</a></li>
+            <li><a href="board.html">자유게시판</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-header">
+        <h1>게임 소개 및 활동지</h1>
+        <p>게임 속에 숨겨진 수학 원리를 알아보고, 수업용 활동지를 다운로드하세요!</p>
+    </div>
+
+    <main class="container">
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>📊 대수막대 인수분해</span></div>
+                <a href="games/algebra.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        다항식의 곱셈과 인수분해는 단순한 수식 암기가 아닙니다. 
+                        직사각형의 <b>넓이(Area) 모델</b>을 통해 $(x+a)(x+b)$ 꼴의 식을 시각적으로 이해할 수 있습니다. 
+                        $x^2, x, 1$ 타일을 빈틈없이 채워 직사각형을 만드는 과정에서 인수분해의 기하학적 의미를 체득합니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        주어진 다항식을 보고 타일을 배치하여 직사각형을 완성하세요. 
+                        가로와 세로의 길이가 곧 인수분해된 식의 인수가 됩니다.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">수업용 활동지 (PDF)</div>
+                    <a href="files/algebra_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">파일 크기: 1.2MB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>🔵 원주각과 중심각</span></div>
+                <a href="games/circle-angle/index.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        한 호에 대한 <b>원주각의 크기는 중심각 크기의 1/2</b>이라는 정리는 기하학에서 매우 중요합니다.
+                        점 P가 원 위 어디에 있든(같은 호 위라면) 각의 크기가 변하지 않는다는 <b>'원주각의 불변성'</b>을 직관적으로 이해해야 합니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        점 A, B를 움직여 중심각을 조절하고, 점 P를 드래그하며 원주각의 변화를 관찰하세요.
+                        실시간으로 표시되는 각도를 보며 $Angle(Center) = 2 \times Angle(Inscribed)$ 관계를 확인합니다.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">탐구 활동지 (PDF)</div>
+                    <a href="files/circle_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">파일 크기: 850KB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>⚗️ 수식의 연금술사</span></div>
+                <a href="games/number-maker/index.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        주어진 숫자와 연산 기호만을 사용하여 목표 수를 만드는 과정은 <b>연산의 우선순위</b>와 <b>수의 성질</b>(거듭제곱, 제곱근, 팩토리얼 등)을 깊이 이해하게 합니다.
+                        단순 계산을 넘어, 수를 구조적으로 바라보는 '수 감각(Number Sense)'을 길러줍니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        난이도를 선택하고 주어진 재료(숫자)를 남김없이 사용하여 목표 숫자를 연성하세요.
+                        고급 단계에서는 팩토리얼(!)과 루트(√)까지 활용해야 합니다.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">도전 과제 활동지</div>
+                    <a href="files/number_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">파일 크기: 600KB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>🕵️ 함수 수사대</span></div>
+                <a href="games/linear-func/index.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        일차함수 $y=ax+b$에서 <b>기울기($a$)</b>와 <b>$y$절편($b$)</b>이 그래프의 모양을 어떻게 결정하는지 이해합니다.
+                        그래프의 기하학적 특징(절편, 기울어진 정도)을 보고 대수적 식을 추론하는 역방향 사고를 훈련합니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        범인이 남기고 간 그래프 흔적을 보고, 알맞은 일차함수 식을 입력하여 정답을 맞히세요.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">함수 그래프 활동지</div>
+                    <a href="files/func_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">파일 크기: 1.5MB</div>
+                </div>
+            </div>
+        </div>
+
+        </main>
+
+    <footer style="background-color: #2d3436; color: #b2bec3; text-align: center; padding: 40px 0;">
+        <p>© 2025 수학 놀이터. All rights reserved.</p>
+        <p>Designed by Teacher & AI Gemini</p>
+    </footer>
+
+</body>
+</html>

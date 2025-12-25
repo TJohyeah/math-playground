@@ -9,6 +9,7 @@
      crossorigin="anonymous"></script>
 
     <meta name="description" content="수학 놀이터 게임들의 수학적 원리를 배우고, 수업용 활동지를 다운로드하세요.">
+    
     <link rel="icon" type="image/png" href="https://TJohyeah.github.io/math-playground/favicon.png">
     <link rel="apple-touch-icon" href="https://TJohyeah.github.io/math-playground/favicon.png">
     
@@ -16,17 +17,18 @@
     
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
-        /* [공통 스타일] index.html의 디자인을 그대로 가져왔습니다 */
+        /* 기본 스타일 (index.html과 동일) */
         :root {
-            --primary-color: #4a69bd; /* 메인 파란색 */
-            --accent-color: #f6b93b;  /* 포인트 노란색 */
-            --bg-color: #f0f4f8;      /* 배경색 */
+            --primary-color: #4a69bd;
+            --accent-color: #f6b93b;
+            --bg-color: #f0f4f8;
         }
         body {
             margin: 0; padding: 0;
@@ -37,41 +39,31 @@
         a { text-decoration: none; color: inherit; }
         ul { list-style: none; padding: 0; margin: 0; }
 
-        /* 상단 네비게이션 */
+        /* 네비게이션 */
         nav {
             background-color: #fff;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 100;
         }
         .logo {
-            font-family: 'Jua', sans-serif;
-            font-size: 1.8rem;
-            color: var(--primary-color);
-            display: flex; align-items: center; gap: 10px;
-            cursor: pointer;
+            font-family: 'Jua', sans-serif; font-size: 1.8rem; color: var(--primary-color);
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
         }
         .menu { display: flex; gap: 30px; font-weight: bold; }
         .menu li a:hover { color: var(--primary-color); }
-        
-        /* 현재 페이지(게임 소개) 표시 */
         .active-menu { color: var(--primary-color); border-bottom: 3px solid var(--accent-color); }
 
-        /* 히어로 섹션 (페이지 제목) */
+        /* 히어로 섹션 */
         .hero {
-            background: linear-gradient(135deg, #a29bfe, #6c5ce7); /* 소개 페이지는 보라색 톤으로 살짝 차별화 */
-            color: white;
-            text-align: center;
-            padding: 60px 20px;
-            margin-bottom: 40px;
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white; text-align: center; padding: 60px 20px; margin-bottom: 40px;
         }
         .hero h1 { font-family: 'Jua', sans-serif; font-size: 2.5rem; margin: 0 0 10px 0; }
         .hero p { font-size: 1.1rem; opacity: 0.9; }
 
-        /* [소개 페이지 전용] 카드 스타일 */
+        /* 카드 레이아웃 */
         .container { max-width: 1000px; margin: 0 auto; padding: 0 20px 80px 20px; }
         
         .intro-card {
@@ -94,7 +86,6 @@
         .card-body { padding: 30px; display: flex; flex-wrap: wrap; gap: 30px; }
         .text-section { flex: 2; min-width: 300px; }
         
-        /* 활동지 다운로드 영역 */
         .download-section { 
             flex: 1; min-width: 250px; background: #fff8e1; border-radius: 15px; padding: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
@@ -116,17 +107,9 @@
         .download-btn:active { transform: translateY(2px); box-shadow: none; }
         .file-info { font-size: 0.8rem; color: #888; margin-top: 8px; }
 
-        /* 푸터 */
-        footer {
-            background-color: #2d3436; color: #b2bec3;
-            text-align: center; padding: 40px 0; margin-top: auto;
-        }
-
-        /* 방문자 카운터 고정 */
-        .visitor-badge {
-            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
-            opacity: 0.6; transition: opacity 0.3s;
-        }
+        /* 푸터 & 배지 */
+        footer { background-color: #2d3436; color: #b2bec3; text-align: center; padding: 40px 0; margin-top: auto; }
+        .visitor-badge { position: fixed; bottom: 20px; right: 20px; z-index: 9999; opacity: 0.6; transition: opacity 0.3s; }
         .visitor-badge:hover { opacity: 1.0; }
     </style>
 </head>
@@ -169,11 +152,123 @@
                 </div>
                 <div class="download-section">
                     <div style="font-size: 3rem;">📄</div>
-                    <div style="font-weight:bold; margin:10px 0;">수업용 활동지 (PDF)</div>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
                     <a href="files/algebra_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">예상 파일 크기: 1.2MB</div>
+                    <div class="file-info">algebra_worksheet.pdf</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>📍 좌표를 찾아라!</span></div>
+                <a href="games/coordinates.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        데카르트가 창안한 <b>직교 좌표계(Cartesian Coordinate System)</b>는 기하학적 위치를 대수적인 숫자로 표현하는 혁명적인 도구입니다.
+                        순서쌍 $(x, y)$에서 $x$는 좌우 위치를, $y$는 상하 위치를 나타낸다는 약속을 게임을 통해 직관적으로 훈련합니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        화면에 표시된 점의 위치를 보고, 정확한 $x$좌표와 $y$좌표를 입력하여 점수를 획득하세요.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
+                    <a href="files/coordinates_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">coordinates_worksheet.pdf</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>💎 소수 사냥꾼</span></div>
+                <a href="games/prime.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        <b>소수(Prime Number)</b>는 1과 자기 자신만을 약수로 가지는 수로, 모든 자연수의 기본 재료(Atom)가 됩니다.
+                        합성수와 소수를 빠르게 구분하는 능력은 수 감각을 기르는 데 필수적입니다. 에라토스테네스의 체 원리를 게임에 적용했습니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        하늘에서 떨어지는 숫자 보석 중 오직 '소수'만 클릭하여 터뜨리세요. 합성수를 건드리면 라이프가 줄어듭니다!
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
+                    <a href="files/prime_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">prime_worksheet.pdf</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>🤔 여기는 몇 사분면</span></div>
+                <a href="games/quadrants.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        좌표평면은 $x$축과 $y$축에 의해 네 개의 구역(사분면)으로 나뉩니다.
+                        각 사분면은 좌표의 부호 $(+,+), (-,+), (-,-), (+,-)$ 에 따라 결정됩니다. 이 부호 감각은 삼각함수의 부호 판별 등으로 이어지는 중요한 기초입니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        랜덤하게 찍힌 점을 보고, 해당 점이 제1, 2, 3, 4사분면 중 어디에 속하는지 빠르게 판단하여 버튼을 누르세요.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
+                    <a href="files/quadrants_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">quadrants_worksheet.pdf</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-card">
+            <div class="card-header">
+                <div class="game-title"><span>🕵️ 함수수사대</span></div>
+                <a href="games/linear_func.html" class="play-link">게임 하러가기 ▶</a>
+            </div>
+            <div class="card-body">
+                <div class="text-section">
+                    <h3>수학적 원리</h3>
+                    <p>
+                        일차함수 $y=ax+b$에서 <b>기울기($a$)</b>는 그래프의 기울어진 정도와 방향을, <b>$y$절편($b$)</b>은 그래프가 $y$축과 만나는 위치를 결정합니다.
+                        그래프라는 기하학적 정보를 보고 대수적인 식을 추론하는 역방향 사고를 훈련합니다.
+                    </p>
+                    <h3>게임 활용법</h3>
+                    <p>
+                        범인이 남긴 그래프 흔적을 분석하여 기울기와 $y$절편을 찾아내고, 알맞은 함수식을 입력하여 사건을 해결하세요.
+                    </p>
+                </div>
+                <div class="download-section">
+                    <div style="font-size: 3rem;">📄</div>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
+                    <a href="files/linear_func_worksheet.pdf" class="download-btn" download>
+                        다운로드 받기
+                    </a>
+                    <div class="file-info">linear_func_worksheet.pdf</div>
                 </div>
             </div>
         </div>
@@ -181,7 +276,7 @@
         <div class="intro-card">
             <div class="card-header">
                 <div class="game-title"><span>🔵 원주각과 중심각</span></div>
-                <a href="games/circle-angle/index.html" class="play-link">게임 하러가기 ▶</a>
+                <a href="games/circle-angle.html" class="play-link">게임 하러가기 ▶</a>
             </div>
             <div class="card-body">
                 <div class="text-section">
@@ -198,11 +293,11 @@
                 </div>
                 <div class="download-section">
                     <div style="font-size: 3rem;">📄</div>
-                    <div style="font-weight:bold; margin:10px 0;">탐구 활동지 (PDF)</div>
-                    <a href="files/circle_worksheet.pdf" class="download-btn" download>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
+                    <a href="files/circle_angle_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">예상 파일 크기: 850KB</div>
+                    <div class="file-info">circle_angle_worksheet.pdf</div>
                 </div>
             </div>
         </div>
@@ -210,7 +305,7 @@
         <div class="intro-card">
             <div class="card-header">
                 <div class="game-title"><span>⚗️ 수식의 연금술사</span></div>
-                <a href="games/number-maker/index.html" class="play-link">게임 하러가기 ▶</a>
+                <a href="games/number-maker.html" class="play-link">게임 하러가기 ▶</a>
             </div>
             <div class="card-body">
                 <div class="text-section">
@@ -227,39 +322,11 @@
                 </div>
                 <div class="download-section">
                     <div style="font-size: 3rem;">📄</div>
-                    <div style="font-weight:bold; margin:10px 0;">도전 과제 활동지</div>
-                    <a href="files/number_worksheet.pdf" class="download-btn" download>
+                    <div style="font-weight:bold; margin:10px 0;">활동지 다운로드</div>
+                    <a href="files/number_maker_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">예상 파일 크기: 600KB</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="intro-card">
-            <div class="card-header">
-                <div class="game-title"><span>🕵️ 함수 수사대</span></div>
-                <a href="games/linear-func/index.html" class="play-link">게임 하러가기 ▶</a>
-            </div>
-            <div class="card-body">
-                <div class="text-section">
-                    <h3>수학적 원리</h3>
-                    <p>
-                        일차함수 $y=ax+b$에서 <b>기울기($a$)</b>와 <b>$y$절편($b$)</b>이 그래프의 모양을 어떻게 결정하는지 이해합니다.
-                        그래프의 기하학적 특징(절편, 기울어진 정도)을 보고 대수적 식을 추론하는 역방향 사고를 훈련합니다.
-                    </p>
-                    <h3>게임 활용법</h3>
-                    <p>
-                        범인이 남기고 간 그래프 흔적을 보고, 알맞은 일차함수 식을 입력하여 정답을 맞히세요.
-                    </p>
-                </div>
-                <div class="download-section">
-                    <div style="font-size: 3rem;">📄</div>
-                    <div style="font-weight:bold; margin:10px 0;">함수 그래프 활동지</div>
-                    <a href="files/func_worksheet.pdf" class="download-btn" download>
-                        다운로드 받기
-                    </a>
-                    <div class="file-info">예상 파일 크기: 1.5MB</div>
+                    <div class="file-info">number_maker_worksheet.pdf</div>
                 </div>
             </div>
         </div>

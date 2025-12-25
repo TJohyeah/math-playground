@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포물선 대포 | Parabola Cannon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 전체 테마 설정 (밤하늘 배경) */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            color: #fff;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; overflow: hidden; /* 스크롤 방지 */
+            user-select: none;
+        }
+
+        /* 2. 헤더 */
+        header {
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            position: relative; z-index: 10;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.5); color: #fff;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; 
+            text-decoration: none; font-size: 1rem; transition: 0.3s;
+        }
+        .home-btn:hover { background: #fff; color: #1b2735; }
+        h1 { margin: 0; font-size: 2rem; color: #f1c40f; text-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
+
+        /* 3. 메인 게임 컨테이너 */
+        .game-container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 95%; max-width: 1000px; height: calc(100vh - 80px);
+            margin-top: 10px; gap: 15px;
+        }
+
+        /* 캔버스 영역 */
+        .canvas-wrapper {
+            flex: 2; width: 100%;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px; border: 3px solid rgba(241, 196, 15, 0.3);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5) inset;
+            position: relative; overflow: hidden;
+        }
+        #gameCanvas { width: 100%; height: 100%; display: block; }
+
+        /* 컨트롤 패널 영역 */
+        .control-panel {
+            flex: 1; width: 100%; min-height: 180px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px; padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: space-between;
+            border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* 수식 표시 */
+        .equation-display {
+            font-size: 1.8rem; text-align: center; margin-bottom: 15px;
+            color: #3498db; text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+        .highlight-a { color: #e74c3c; }
+        .highlight-p { color: #2ecc71; }
+        .highlight-q { color: #9b59b6; }
+
+        /* 슬라이더 컨트롤 그룹 */
+        .sliders-group {
+            display: flex; justify-content: space-around; gap: 20px; flex-wrap: wrap;
+        }
+        .slider-item {
+            display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 120px;
+        }
+        .slider-label { font-size: 1.2rem; margin-bottom: 5px; }
+        input[type=range] {
+            width: 100%; cursor: pointer; accent-color: #f1c40f;
+        }
+
+        /* 발사 버튼 */
+        .fire-btn {
+            width: 100%; padding: 15px; margin-top: 15px;
+            font-family: 'Jua', sans-serif; font-size: 1.5rem; color: #fff;
+            background: linear-gradient(to bottom, #e67e22, #d35400);
+            border: none; border-radius: 15px; cursor: pointer;
+            box-shadow: 0 5px 0 #a04000; transition: 0.1s;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .fire-btn:active { transform: translateY(5px); box-shadow: none; }
+        .fire-btn:disabled { background: #7f8c8d; cursor: not-allowed; box-shadow: none; opacity: 0.7; }
+
+        /* 결과 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #fff, #f0f0f0);
+            padding: 30px 50px; border-radius: 25px; text-align: center; color: #333;
+            border: 5px solid #f1c40f; box-shadow: 0 0 50px rgba(241, 196, 15, 0.5);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h2 { font-size: 3rem; margin: 0 0 10px 0; }
+        .modal p { font-size: 1.5rem; margin-bottom: 20px; }
+        .next-btn {
+            background: #27ae60; color: white; padding: 10px 30px; border: none;
+            border-radius: 20px; font-size: 1.3rem; cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 5px 0 #219150; transition: 0.1s;
+        }
+        .next-btn:active { transform: translateY(5px); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>💣 포물선 대포 (Parabola Cannon)</h1>
+    </header>
+
+    <div class="game-container">
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div class="control-panel">
+            <div class="equation-display">
+                y = <span class="highlight-a" id="valA">-0.5</span>(x - <span class="highlight-p" id="valP">5</span>)² + <span class="highlight-q" id="valQ">10</span>
+            </div>
+            
+            <div class="sliders-group">
+                <div class="slider-item">
+                    <label class="slider-label highlight-a" for="rangeA">기울기(a): <span id="dispA">-0.5</span></label>
+                    <input type="range" id="rangeA" min="-2.0" max="2.0" step="0.1" value="-0.5">
+                </div>
+                <div class="slider-item">
+                    <label class="slider-label highlight-p" for="rangeP">가로 이동(p): <span id="dispP">5</span></label>
+                    <input type="range" id="rangeP" min="1" max="15" step="0.5" value="5">
+                </div>
+                <div class="slider-item">
+                    <label class="slider-label highlight-q" for="rangeQ">세로 이동(q): <span id="dispQ">10</span></label>
+                    <input type="range" id="rangeQ" min="1" max="15" step="0.5" value="10">
+                </div>
+            </div>
+
+            <button class="fire-btn" id="fireBtn" onclick="fireCannon()">🔥 발사! (Fire)</button>
+        </div>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2>명중! 🎯</h2>
+            <p>완벽한 포물선입니다!</p>
+            <button class="next-btn" onclick="nextLevel()">다음 목표물 가져와! 👉</button>
+        </div>
+    </div>
+    <div class="modal" id="failModal" style="background: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="border-color: #c0392b; color: #c0392b;">
+            <h2>빗나갔다... 😓</h2>
+            <p>수식을 다시 생각해보자!</p>
+            <button class="next-btn" style="background:#c0392b; box-shadow:0 5px 0 #962e22;" onclick="closeModal()">재도전 💪</button>
+        </div>
+    </div>
+
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 게임 상태 변수 ('exploding' 상태 추가)
+    let gameState = 'aiming'; // 'aiming', 'firing', 'exploding', 'hit', 'miss'
+    let params = { a: -0.5, p: 5, q: 10 };
+    let target = { x: 0, y: 0, radius: 15 };
+    let ball = { x: 0, y: 0, radius: 8 };
+    
+    // 폭발 효과용 변수
+    let particles = [];
+    let explosionTimer = 0;
+
+    let canvasWidth, canvasHeight;
+    let originX, originY;
+    const SCALE = 30;
+
+    const rangeA = document.getElementById('rangeA');
+    const rangeP = document.getElementById('rangeP');
+    const rangeQ = document.getElementById('rangeQ');
+    const valA = document.getElementById('valA');
+    const valP = document.getElementById('valP');
+    const valQ = document.getElementById('valQ');
+    const dispA = document.getElementById('dispA');
+    const dispP = document.getElementById('dispP');
+    const dispQ = document.getElementById('dispQ');
+    const fireBtn = document.getElementById('fireBtn');
+
+    function init() {
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        rangeA.addEventListener('input', updateParams);
+        rangeP.addEventListener('input', updateParams);
+        rangeQ.addEventListener('input', updateParams);
+
+        nextLevel();
+        gameLoop();
+    }
+
+    function resizeCanvas() {
+        canvasWidth = canvas.parentElement.clientWidth;
+        canvasHeight = canvas.parentElement.clientHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        originX = 50;
+        originY = canvasHeight - 50;
+        draw();
+    }
+
+    function updateParams() {
+        if (gameState !== 'aiming') return;
+        params.a = parseFloat(rangeA.value);
+        params.p = parseFloat(rangeP.value);
+        params.q = parseFloat(rangeQ.value);
+
+        valA.textContent = params.a.toFixed(1);
+        valP.textContent = params.p.toFixed(1);
+        valQ.textContent = params.q.toFixed(1);
+        dispA.textContent = params.a.toFixed(1);
+        dispP.textContent = params.p.toFixed(1);
+        dispQ.textContent = params.q.toFixed(1);
+    }
+
+    function nextLevel() {
+        gameState = 'aiming';
+        fireBtn.disabled = false;
+        document.getElementById('resultModal').style.display = 'none';
+        document.getElementById('failModal').style.display = 'none';
+        particles = []; // 파티클 초기화
+        
+        target.x = Math.random() * 13 + 5;
+        target.y = Math.random() * 10 + 2;
+        ball.x = 0;
+        ball.y = getParabolaY(ball.x);
+    }
+
+    function closeModal() {
+        gameState = 'aiming';
+        fireBtn.disabled = false;
+        document.getElementById('failModal').style.display = 'none';
+        ball.x = 0;
+        ball.y = getParabolaY(ball.x);
+    }
+
+    function getParabolaY(x) {
+        return params.a * Math.pow((x - params.p), 2) + params.q;
+    }
+
+    function toCanvasCoord(x, y) {
+        return {
+            cx: originX + x * SCALE,
+            cy: originY - y * SCALE
+        };
+    }
+
+    function fireCannon() {
+        if (gameState !== 'aiming') return;
+        gameState = 'firing';
+        fireBtn.disabled = true;
+        ball.x = 0;
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // 업데이트 로직 (폭발 상태 추가)
+    function update() {
+        if (gameState === 'firing') {
+            ball.x += 0.15;
+            ball.y = getParabolaY(ball.x);
+
+            const dist = Math.hypot(ball.x - target.x, ball.y - target.y);
+            if (dist < (ball.radius + target.radius) / SCALE * 0.8 ) {
+                // 명중 시 폭발 상태로 전환
+                gameState = 'exploding';
+                createExplosion(ball.x, ball.y);
+            }
+
+            const ballCanvasPos = toCanvasCoord(ball.x, ball.y);
+            if (ballCanvasPos.cy > canvasHeight + 50 || ballCanvasPos.cx > canvasWidth + 50 || ballCanvasPos.cy < -500) {
+                gameState = 'miss';
+                document.getElementById('failModal').style.display = 'flex';
+            }
+        } else if (gameState === 'exploding') {
+            updateExplosion();
+        }
+    }
+
+    // 폭발 효과 생성
+    function createExplosion(x, y) {
+        const pos = toCanvasCoord(x, y);
+        for (let i = 0; i < 30; i++) {
+            particles.push({
+                x: pos.cx, y: pos.cy,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                alpha: 1, color: `hsl(${Math.random()*60 + 10}, 100%, 60%)` // 불꽃 색상
+            });
+        }
+        explosionTimer = 60; // 폭발 지속 시간
+    }
+
+    // 폭발 효과 업데이트
+    function updateExplosion() {
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            p.vy += 0.2; // 중력
+            p.alpha -= 0.03; // 서서히 사라짐
+        });
+        particles = particles.filter(p => p.alpha > 0);
+        explosionTimer--;
+
+        if (explosionTimer <= 0) {
+            gameState = 'hit';
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        drawAxes();
+        drawTarget();
+        // drawTrajectoryPreview(); // [수정] 보조선 그리기 함수 호출 주석 처리 (삭제)
+        drawCannon();
+        
+        if (gameState === 'firing') drawBall();
+        if (gameState === 'exploding') drawExplosion(); // 폭발 그리기
+    }
+
+    // [수정] 축 그리기 강화 (화살표 추가, 더 밝게)
+    function drawAxes() {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        // X축
+        ctx.moveTo(0, originY); ctx.lineTo(canvasWidth, originY);
+        // X축 화살표
+        ctx.lineTo(canvasWidth - 10, originY - 5); ctx.moveTo(canvasWidth, originY); ctx.lineTo(canvasWidth - 10, originY + 5);
+
+        // Y축
+        ctx.moveTo(originX, canvasHeight); ctx.lineTo(originX, 0);
+        // Y축 화살표
+        ctx.lineTo(originX - 5, 10); ctx.moveTo(originX, 0); ctx.lineTo(originX + 5, 10);
+        ctx.stroke();
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('O', originX - 20, originY + 25);
+        ctx.fillText('x', canvasWidth - 20, originY + 25);
+        ctx.fillText('y', originX + 15, 20);
+    }
+
+    function drawCannon() {
+        const startPos = toCanvasCoord(0, getParabolaY(0));
+        ctx.save();
+        ctx.translate(startPos.cx, startPos.cy);
+        const slope = -2 * params.a * params.p;
+        const angle = Math.atan(slope);
+        ctx.rotate(-angle);
+
+        ctx.fillStyle = '#7f8c8d';
+        ctx.fillRect(-10, -15, 40, 30);
+        ctx.fillStyle = '#95a5a6';
+        ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawTarget() {
+        if (gameState === 'exploding' || gameState === 'hit') return; // 폭발 중엔 타겟 숨김
+
+        const pos = toCanvasCoord(target.x, target.y);
+        const gradient = ctx.createRadialGradient(pos.cx, pos.cy, 5, pos.cx, pos.cy, target.radius + 10);
+        gradient.addColorStop(0, '#e74c3c');
+        gradient.addColorStop(0.5, '#c0392b');
+        gradient.addColorStop(1, 'rgba(231, 76, 60, 0)');
+        
+        ctx.beginPath(); ctx.arc(pos.cx, pos.cy, target.radius + 10, 0, Math.PI * 2);
+        ctx.fillStyle = gradient; ctx.fill();
+
+        ctx.beginPath(); ctx.arc(pos.cx, pos.cy, target.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#e74c3c'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+        
+        ctx.beginPath(); ctx.arc(pos.cx, pos.cy, target.radius*0.6, 0, Math.PI*2); ctx.strokeStyle='white'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(pos.cx, pos.cy, target.radius*0.3, 0, Math.PI*2); ctx.fillStyle='white'; ctx.fill();
+    }
+
+    // 폭발 그리기 함수
+    function drawExplosion() {
+        particles.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    function drawBall() {
+        const pos = toCanvasCoord(ball.x, ball.y);
+        ctx.beginPath(); ctx.arc(pos.cx, pos.cy, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#f1c40f'; ctx.fill();
+        
+        ctx.shadowBlur = 20; ctx.shadowColor = '#e67e22';
+        ctx.beginPath(); ctx.arc(pos.cx, pos.cy, ball.radius + 2, 0, Math.PI*2);
+        ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+    
+    // drawTrajectoryPreview 함수는 더 이상 호출되지 않으므로 삭제해도 되지만, 나중을 위해 남겨두고 호출만 주석 처리했습니다.
+
+    init();
+
+</script>
+</body>
+</html>

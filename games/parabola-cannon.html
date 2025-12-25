@@ -54,13 +54,28 @@
 
         /* 컨트롤 패널 영역 */
         .control-panel {
-            flex: 1; width: 100%; min-height: 180px;
+            flex: 1; width: 100%; min-height: 200px;
             background: rgba(255,255,255,0.05);
             border-radius: 20px; padding: 20px; box-sizing: border-box;
             display: flex; flex-direction: column; justify-content: space-between;
             border: 2px solid rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
         }
+
+        /* 모드 스위치 버튼 */
+        .mode-switch {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;
+        }
+        .mode-btn {
+            padding: 8px 16px; border-radius: 20px; border: 2px solid #fff;
+            background: transparent; color: #fff; cursor: pointer; font-family: 'Jua'; font-size: 1rem;
+            transition: 0.2s; opacity: 0.6;
+        }
+        .mode-btn.active {
+            background: #fff; color: #1b2735; opacity: 1; font-weight: bold;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .mode-btn:hover { opacity: 1; }
 
         /* 수식 표시 */
         .equation-display {
@@ -83,9 +98,12 @@
             width: 100%; cursor: pointer; accent-color: #f1c40f;
         }
 
-        /* 발사 버튼 */
+        /* 버튼 그룹 (발사, 지우기) */
+        .action-group {
+            display: flex; gap: 10px; margin-top: 15px;
+        }
         .fire-btn {
-            width: 100%; padding: 15px; margin-top: 15px;
+            flex: 3; padding: 15px;
             font-family: 'Jua', sans-serif; font-size: 1.5rem; color: #fff;
             background: linear-gradient(to bottom, #e67e22, #d35400);
             border: none; border-radius: 15px; cursor: pointer;
@@ -94,6 +112,15 @@
         }
         .fire-btn:active { transform: translateY(5px); box-shadow: none; }
         .fire-btn:disabled { background: #7f8c8d; cursor: not-allowed; box-shadow: none; opacity: 0.7; }
+
+        .clear-btn {
+            flex: 1; padding: 15px; display: none; /* 기본 숨김 */
+            font-family: 'Jua', sans-serif; font-size: 1.2rem; color: #fff;
+            background: linear-gradient(to bottom, #7f8c8d, #2c3e50);
+            border: none; border-radius: 15px; cursor: pointer;
+            box-shadow: 0 5px 0 #34495e; transition: 0.1s;
+        }
+        .clear-btn:active { transform: translateY(5px); box-shadow: none; }
 
         /* 결과 모달 */
         .modal {
@@ -130,6 +157,11 @@
         </div>
 
         <div class="control-panel">
+            <div class="mode-switch">
+                <button class="mode-btn active" id="btnGameMode" onclick="setMode('game')">🎯 게임 모드</button>
+                <button class="mode-btn" id="btnLabMode" onclick="setMode('lab')">🔬 실험실 모드</button>
+            </div>
+
             <div class="equation-display">
                 y = <span class="highlight-a" id="valA">-0.5</span>(x - <span class="highlight-p" id="valP">5</span>)² + <span class="highlight-q" id="valQ">10</span>
             </div>
@@ -149,7 +181,10 @@
                 </div>
             </div>
 
-            <button class="fire-btn" id="fireBtn" onclick="fireCannon()">🔥 발사! (Fire)</button>
+            <div class="action-group">
+                <button class="fire-btn" id="fireBtn" onclick="fireCannon()">🔥 발사! (Fire)</button>
+                <button class="clear-btn" id="clearBtn" onclick="clearTrails()">🧹 지우기</button>
+            </div>
         </div>
     </div>
 
@@ -157,7 +192,7 @@
         <div class="modal-content">
             <h2>명중! 🎯</h2>
             <p>완벽한 포물선입니다!</p>
-            <button class="next-btn" onclick="nextLevel()">다음 목표물 가져와! 👉</button>
+            <button class="next-btn" onclick="nextLevel()">다음 목표물 👉</button>
         </div>
     </div>
     <div class="modal" id="failModal" style="background: rgba(0,0,0,0.6);">
@@ -168,18 +203,22 @@
         </div>
     </div>
 
-
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // 게임 상태 변수 ('exploding' 상태 추가)
+    // 게임 상태 변수
+    let currentMode = 'game'; // 'game' or 'lab'
     let gameState = 'aiming'; // 'aiming', 'firing', 'exploding', 'hit', 'miss'
+    
     let params = { a: -0.5, p: 5, q: 10 };
     let target = { x: 0, y: 0, radius: 15 };
     let ball = { x: 0, y: 0, radius: 8 };
     
-    // 폭발 효과용 변수
+    // 실험실 모드 전용 변수 (궤적 저장)
+    let trails = []; // {a, p, q, color} 저장
+
+    // 폭발 효과
     let particles = [];
     let explosionTimer = 0;
 
@@ -187,6 +226,7 @@
     let originX, originY;
     const SCALE = 30;
 
+    // DOM 요소
     const rangeA = document.getElementById('rangeA');
     const rangeP = document.getElementById('rangeP');
     const rangeQ = document.getElementById('rangeQ');
@@ -197,6 +237,9 @@
     const dispP = document.getElementById('dispP');
     const dispQ = document.getElementById('dispQ');
     const fireBtn = document.getElementById('fireBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const btnGameMode = document.getElementById('btnGameMode');
+    const btnLabMode = document.getElementById('btnLabMode');
 
     function init() {
         resizeCanvas();
@@ -206,8 +249,33 @@
         rangeP.addEventListener('input', updateParams);
         rangeQ.addEventListener('input', updateParams);
 
-        nextLevel();
+        setMode('game'); // 초기 모드
         gameLoop();
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        gameState = 'aiming';
+        
+        // 버튼 스타일 업데이트
+        if(mode === 'game') {
+            btnGameMode.classList.add('active');
+            btnLabMode.classList.remove('active');
+            clearBtn.style.display = 'none'; // 지우기 버튼 숨김
+            nextLevel(); // 게임 초기화
+        } else {
+            btnGameMode.classList.remove('active');
+            btnLabMode.classList.add('active');
+            clearBtn.style.display = 'block'; // 지우기 버튼 표시
+            trails = []; // 기존 궤적 초기화
+            ball.x = 0;
+            ball.y = getParabolaY(ball.x);
+        }
+        
+        // 모달 닫기
+        document.getElementById('resultModal').style.display = 'none';
+        document.getElementById('failModal').style.display = 'none';
+        fireBtn.disabled = false;
     }
 
     function resizeCanvas() {
@@ -221,7 +289,8 @@
     }
 
     function updateParams() {
-        if (gameState !== 'aiming') return;
+        if (gameState !== 'aiming' && currentMode === 'game') return; // 게임 중엔 조작 불가
+        
         params.a = parseFloat(rangeA.value);
         params.p = parseFloat(rangeP.value);
         params.q = parseFloat(rangeQ.value);
@@ -232,14 +301,21 @@
         dispA.textContent = params.a.toFixed(1);
         dispP.textContent = params.p.toFixed(1);
         dispQ.textContent = params.q.toFixed(1);
+        
+        // 실험실 모드면 공 위치 실시간 업데이트
+        if (currentMode === 'lab' && gameState === 'aiming') {
+             ball.x = 0;
+             ball.y = getParabolaY(ball.x);
+        }
     }
 
     function nextLevel() {
+        if(currentMode !== 'game') return;
         gameState = 'aiming';
         fireBtn.disabled = false;
         document.getElementById('resultModal').style.display = 'none';
         document.getElementById('failModal').style.display = 'none';
-        particles = []; // 파티클 초기화
+        particles = [];
         
         target.x = Math.random() * 13 + 5;
         target.y = Math.random() * 10 + 2;
@@ -255,8 +331,12 @@
         ball.y = getParabolaY(ball.x);
     }
 
-    function getParabolaY(x) {
-        return params.a * Math.pow((x - params.p), 2) + params.q;
+    function clearTrails() {
+        trails = [];
+    }
+
+    function getParabolaY(x, p = params) {
+        return p.a * Math.pow((x - p.p), 2) + p.q;
     }
 
     function toCanvasCoord(x, y) {
@@ -267,9 +347,23 @@
     }
 
     function fireCannon() {
-        if (gameState !== 'aiming') return;
+        // 실험실 모드면 발사 시 현재 궤적을 기록에 저장
+        if (currentMode === 'lab') {
+            trails.push({ ...params, color: `rgba(52, 152, 219, 0.4)` });
+        }
+
+        if (gameState !== 'aiming') {
+            // 이미 발사 중이면 리셋하고 다시 발사 (실험실 모드 편의성)
+            if(currentMode === 'lab') {
+                ball.x = 0;
+                gameState = 'firing';
+                return;
+            }
+            return;
+        }
+
         gameState = 'firing';
-        fireBtn.disabled = true;
+        if(currentMode === 'game') fireBtn.disabled = true;
         ball.x = 0;
     }
 
@@ -279,30 +373,38 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // 업데이트 로직 (폭발 상태 추가)
     function update() {
         if (gameState === 'firing') {
-            ball.x += 0.15;
+            ball.x += 0.2; // 공 속도
             ball.y = getParabolaY(ball.x);
 
-            const dist = Math.hypot(ball.x - target.x, ball.y - target.y);
-            if (dist < (ball.radius + target.radius) / SCALE * 0.8 ) {
-                // 명중 시 폭발 상태로 전환
-                gameState = 'exploding';
-                createExplosion(ball.x, ball.y);
+            // 게임 모드일 때만 충돌 체크
+            if (currentMode === 'game') {
+                const dist = Math.hypot(ball.x - target.x, ball.y - target.y);
+                if (dist < (ball.radius + target.radius) / SCALE * 0.8 ) {
+                    gameState = 'exploding';
+                    createExplosion(ball.x, ball.y);
+                }
             }
 
+            // 화면 밖 처리
             const ballCanvasPos = toCanvasCoord(ball.x, ball.y);
             if (ballCanvasPos.cy > canvasHeight + 50 || ballCanvasPos.cx > canvasWidth + 50 || ballCanvasPos.cy < -500) {
-                gameState = 'miss';
-                document.getElementById('failModal').style.display = 'flex';
+                if (currentMode === 'game') {
+                    gameState = 'miss';
+                    document.getElementById('failModal').style.display = 'flex';
+                } else {
+                    // 실험실 모드는 그냥 리셋
+                    gameState = 'aiming';
+                    ball.x = 0;
+                    ball.y = getParabolaY(ball.x);
+                }
             }
         } else if (gameState === 'exploding') {
             updateExplosion();
         }
     }
 
-    // 폭발 효과 생성
     function createExplosion(x, y) {
         const pos = toCanvasCoord(x, y);
         for (let i = 0; i < 30; i++) {
@@ -310,18 +412,17 @@
                 x: pos.cx, y: pos.cy,
                 vx: (Math.random() - 0.5) * 10,
                 vy: (Math.random() - 0.5) * 10,
-                alpha: 1, color: `hsl(${Math.random()*60 + 10}, 100%, 60%)` // 불꽃 색상
+                alpha: 1, color: `hsl(${Math.random()*60 + 10}, 100%, 60%)`
             });
         }
-        explosionTimer = 60; // 폭발 지속 시간
+        explosionTimer = 60;
     }
 
-    // 폭발 효과 업데이트
     function updateExplosion() {
         particles.forEach(p => {
             p.x += p.vx; p.y += p.vy;
-            p.vy += 0.2; // 중력
-            p.alpha -= 0.03; // 서서히 사라짐
+            p.vy += 0.2;
+            p.alpha -= 0.03;
         });
         particles = particles.filter(p => p.alpha > 0);
         explosionTimer--;
@@ -336,27 +437,59 @@
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         drawAxes();
-        drawTarget();
-        // drawTrajectoryPreview(); // [수정] 보조선 그리기 함수 호출 주석 처리 (삭제)
+
+        // 게임 모드일 때만 타겟 그리기
+        if (currentMode === 'game') {
+            drawTarget();
+        } else {
+            // 실험실 모드일 때 궤적(Ghost Trails) 그리기
+            drawTrails();
+        }
+
         drawCannon();
         
-        if (gameState === 'firing') drawBall();
-        if (gameState === 'exploding') drawExplosion(); // 폭발 그리기
+        // 공 그리기 (발사 중이거나, 실험실 모드 에이밍 중일 때)
+        if (gameState === 'firing' || (currentMode === 'lab' && gameState === 'aiming')) {
+            drawBall();
+        }
+        
+        if (gameState === 'exploding') drawExplosion();
     }
 
-    // [수정] 축 그리기 강화 (화살표 추가, 더 밝게)
+    function drawTrails() {
+        trails.forEach(t => {
+            ctx.beginPath();
+            ctx.strokeStyle = t.color;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]); // 점선
+
+            let started = false;
+            // 화면 범위 내에서만 그림
+            for (let x = 0; x <= 30; x += 0.5) {
+                const y = getParabolaY(x, t);
+                const pos = toCanvasCoord(x, y);
+                
+                // 화면 밖으로 너무 나가면 그리기 중단 (성능 최적화)
+                if (pos.cy < -100 || pos.cy > canvasHeight + 100) continue;
+
+                if (!started) { ctx.moveTo(pos.cx, pos.cy); started = true; }
+                else { ctx.lineTo(pos.cx, pos.cy); }
+            }
+            ctx.stroke();
+        });
+        ctx.setLineDash([]); // 점선 초기화
+    }
+
     function drawAxes() {
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.lineWidth = 2;
         // X축
         ctx.moveTo(0, originY); ctx.lineTo(canvasWidth, originY);
-        // X축 화살표
         ctx.lineTo(canvasWidth - 10, originY - 5); ctx.moveTo(canvasWidth, originY); ctx.lineTo(canvasWidth - 10, originY + 5);
 
         // Y축
         ctx.moveTo(originX, canvasHeight); ctx.lineTo(originX, 0);
-        // Y축 화살표
         ctx.lineTo(originX - 5, 10); ctx.moveTo(originX, 0); ctx.lineTo(originX + 5, 10);
         ctx.stroke();
         
@@ -384,7 +517,7 @@
     }
 
     function drawTarget() {
-        if (gameState === 'exploding' || gameState === 'hit') return; // 폭발 중엔 타겟 숨김
+        if (gameState === 'exploding' || gameState === 'hit') return;
 
         const pos = toCanvasCoord(target.x, target.y);
         const gradient = ctx.createRadialGradient(pos.cx, pos.cy, 5, pos.cx, pos.cy, target.radius + 10);
@@ -403,7 +536,6 @@
         ctx.beginPath(); ctx.arc(pos.cx, pos.cy, target.radius*0.3, 0, Math.PI*2); ctx.fillStyle='white'; ctx.fill();
     }
 
-    // 폭발 그리기 함수
     function drawExplosion() {
         particles.forEach(p => {
             ctx.save();
@@ -425,8 +557,6 @@
         ctx.shadowBlur = 0;
     }
     
-    // drawTrajectoryPreview 함수는 더 이상 호출되지 않으므로 삭제해도 되지만, 나중을 위해 남겨두고 호출만 주석 처리했습니다.
-
     init();
 
 </script>

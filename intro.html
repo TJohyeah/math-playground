@@ -5,40 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>게임 소개 & 활동지 | 수학 놀이터</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3461285043596254"
+     crossorigin="anonymous"></script>
+
+    <meta name="description" content="수학 놀이터 게임들의 수학적 원리를 배우고, 수업용 활동지를 다운로드하세요.">
     <link rel="icon" type="image/png" href="https://TJohyeah.github.io/math-playground/favicon.png">
+    <link rel="apple-touch-icon" href="https://TJohyeah.github.io/math-playground/favicon.png">
     
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
-        /* 1. 기본 테마 설정 */
+        /* [공통 스타일] index.html의 디자인을 그대로 가져왔습니다 */
         :root {
-            --primary: #4a69bd;
-            --secondary: #f6b93b;
-            --bg: #f0f4f8;
-            --text: #2d3436;
+            --primary-color: #4a69bd; /* 메인 파란색 */
+            --accent-color: #f6b93b;  /* 포인트 노란색 */
+            --bg-color: #f0f4f8;      /* 배경색 */
         }
-        body { margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+        }
         a { text-decoration: none; color: inherit; }
         ul { list-style: none; padding: 0; margin: 0; }
 
-        /* 2. 네비게이션 */
+        /* 상단 네비게이션 */
         nav {
-            background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 15px 40px;
-            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky; top: 0; z-index: 100;
         }
-        .logo { font-family: 'Jua'; font-size: 1.8rem; color: var(--primary); }
+        .logo {
+            font-family: 'Jua', sans-serif;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
+        }
         .menu { display: flex; gap: 30px; font-weight: bold; }
-        .menu li a:hover { color: var(--primary); }
-        .active-menu { color: var(--primary); border-bottom: 3px solid var(--secondary); }
+        .menu li a:hover { color: var(--primary-color); }
+        
+        /* 현재 페이지(게임 소개) 표시 */
+        .active-menu { color: var(--primary-color); border-bottom: 3px solid var(--accent-color); }
 
-        /* 3. 헤더 */
-        .page-header {
-            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
-            color: white; text-align: center; padding: 60px 20px; margin-bottom: 40px;
+        /* 히어로 섹션 (페이지 제목) */
+        .hero {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7); /* 소개 페이지는 보라색 톤으로 살짝 차별화 */
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+            margin-bottom: 40px;
         }
-        .page-header h1 { font-family: 'Jua'; font-size: 2.5rem; margin: 0; }
-        .page-header p { font-size: 1.1rem; opacity: 0.9; margin-top: 10px; }
+        .hero h1 { font-family: 'Jua', sans-serif; font-size: 2.5rem; margin: 0 0 10px 0; }
+        .hero p { font-size: 1.1rem; opacity: 0.9; }
 
-        /* 4. 소개 카드 레이아웃 */
+        /* [소개 페이지 전용] 카드 스타일 */
         .container { max-width: 1000px; margin: 0 auto; padding: 0 20px 80px 20px; }
         
         .intro-card {
@@ -51,22 +84,27 @@
             padding: 20px 30px; background: #f8f9fa; border-bottom: 1px solid #eee;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .game-title { font-family: 'Jua'; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .game-title { font-family: 'Jua'; font-size: 1.5rem; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
         .play-link {
-            background: var(--primary); color: white; padding: 8px 20px; border-radius: 20px;
+            background: var(--primary-color); color: white; padding: 8px 20px; border-radius: 20px;
             font-size: 0.9rem; font-weight: bold; transition: 0.2s;
         }
         .play-link:hover { background: #3c5aa0; transform: translateY(-2px); }
 
         .card-body { padding: 30px; display: flex; flex-wrap: wrap; gap: 30px; }
         .text-section { flex: 2; min-width: 300px; }
+        
+        /* 활동지 다운로드 영역 */
         .download-section { 
             flex: 1; min-width: 250px; background: #fff8e1; border-radius: 15px; padding: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
             border: 2px dashed #ffeaa7;
         }
 
-        h3 { color: #2d3436; margin-top: 0; margin-bottom: 10px; font-size: 1.2rem; border-left: 4px solid var(--secondary); padding-left: 10px; }
+        h3 { 
+            color: #2d3436; margin-top: 0; margin-bottom: 10px; font-size: 1.2rem; 
+            border-left: 4px solid var(--accent-color); padding-left: 10px; 
+        }
         p { line-height: 1.7; color: #636e72; font-size: 0.95rem; margin-bottom: 20px; }
 
         .download-btn {
@@ -78,6 +116,18 @@
         .download-btn:active { transform: translateY(2px); box-shadow: none; }
         .file-info { font-size: 0.8rem; color: #888; margin-top: 8px; }
 
+        /* 푸터 */
+        footer {
+            background-color: #2d3436; color: #b2bec3;
+            text-align: center; padding: 40px 0; margin-top: auto;
+        }
+
+        /* 방문자 카운터 고정 */
+        .visitor-badge {
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            opacity: 0.6; transition: opacity 0.3s;
+        }
+        .visitor-badge:hover { opacity: 1.0; }
     </style>
 </head>
 <body>
@@ -91,7 +141,7 @@
         </ul>
     </nav>
 
-    <div class="page-header">
+    <div class="hero">
         <h1>게임 소개 및 활동지</h1>
         <p>게임 속에 숨겨진 수학 원리를 알아보고, 수업용 활동지를 다운로드하세요!</p>
     </div>
@@ -123,7 +173,7 @@
                     <a href="files/algebra_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">파일 크기: 1.2MB</div>
+                    <div class="file-info">예상 파일 크기: 1.2MB</div>
                 </div>
             </div>
         </div>
@@ -137,13 +187,13 @@
                 <div class="text-section">
                     <h3>수학적 원리</h3>
                     <p>
-                        한 호에 대한 <b>원주각의 크기는 중심각 크기의 1/2</b>이라는 정리는 기하학에서 매우 중요합니다.
+                        한 호에 대한 <b>원주각의 크기는 중심각 크기의 $\frac{1}{2}$</b>이라는 정리는 기하학에서 매우 중요합니다.
                         점 P가 원 위 어디에 있든(같은 호 위라면) 각의 크기가 변하지 않는다는 <b>'원주각의 불변성'</b>을 직관적으로 이해해야 합니다.
                     </p>
                     <h3>게임 활용법</h3>
                     <p>
                         점 A, B를 움직여 중심각을 조절하고, 점 P를 드래그하며 원주각의 변화를 관찰하세요.
-                        실시간으로 표시되는 각도를 보며 $Angle(Center) = 2 \times Angle(Inscribed)$ 관계를 확인합니다.
+                        실시간으로 표시되는 각도를 보며 $\angle AOB = 2 \times \angle APB$ 관계를 확인합니다.
                     </p>
                 </div>
                 <div class="download-section">
@@ -152,7 +202,7 @@
                     <a href="files/circle_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">파일 크기: 850KB</div>
+                    <div class="file-info">예상 파일 크기: 850KB</div>
                 </div>
             </div>
         </div>
@@ -172,7 +222,7 @@
                     <h3>게임 활용법</h3>
                     <p>
                         난이도를 선택하고 주어진 재료(숫자)를 남김없이 사용하여 목표 숫자를 연성하세요.
-                        고급 단계에서는 팩토리얼(!)과 루트(√)까지 활용해야 합니다.
+                        고급 단계에서는 팩토리얼($!$)과 루트($\sqrt{x}$)까지 활용해야 합니다.
                     </p>
                 </div>
                 <div class="download-section">
@@ -181,7 +231,7 @@
                     <a href="files/number_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">파일 크기: 600KB</div>
+                    <div class="file-info">예상 파일 크기: 600KB</div>
                 </div>
             </div>
         </div>
@@ -209,17 +259,23 @@
                     <a href="files/func_worksheet.pdf" class="download-btn" download>
                         다운로드 받기
                     </a>
-                    <div class="file-info">파일 크기: 1.5MB</div>
+                    <div class="file-info">예상 파일 크기: 1.5MB</div>
                 </div>
             </div>
         </div>
 
-        </main>
+    </main>
 
-    <footer style="background-color: #2d3436; color: #b2bec3; text-align: center; padding: 40px 0;">
+    <footer>
         <p>© 2025 수학 놀이터. All rights reserved.</p>
         <p>Designed by Teacher & AI Gemini</p>
     </footer>
+
+    <div class="visitor-badge">
+        <a href="https://hits.sh/TJohyeah.github.io/math-playground/">
+            <img alt="Hits" src="https://hits.sh/TJohyeah.github.io/math-playground.svg?view=today-total&style=flat-square&color=78c850&labelColor=6ca6ff"/>
+        </a>
+    </div>
 
 </body>
 </html>

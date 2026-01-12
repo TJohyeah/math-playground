@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>골드바흐의 파티션 | Goldbach's Partition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 테마: 신비로운 우주와 황금 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
+            color: #ecf0f1;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; user-select: none;
+        }
+
+        /* 2. 헤더 */
+        header {
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: transparent; border: 2px solid #f1c40f; color: #f1c40f;
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; text-decoration: none;
+            transition: 0.3s;
+        }
+        .home-btn:hover { background: #f1c40f; color: #000; }
+        h1 { margin: 0; font-size: 2rem; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+
+        /* 3. 메뉴 화면 */
+        #menuScreen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 80vh; width: 100%; text-align: center;
+        }
+        .mode-btn {
+            width: 300px; padding: 20px; margin: 15px;
+            font-size: 1.5rem; border: none; border-radius: 50px; cursor: pointer;
+            font-family: 'Jua'; transition: transform 0.2s, box-shadow 0.2s;
+            color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .mode-btn:hover { transform: scale(1.05); }
+        .btn-tuto { background: linear-gradient(45deg, #1abc9c, #16a085); }
+        .btn-prac { background: linear-gradient(45deg, #3498db, #2980b9); }
+        .btn-chall { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+
+        /* 4. 게임 화면 */
+        #gameScreen {
+            display: none; flex-direction: column; align-items: center;
+            width: 90%; max-width: 600px; margin-top: 30px;
+        }
+        
+        /* 타겟 숫자 표시 (레이아웃 개선) */
+        .target-box {
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 40px;
+        }
+        .target-label { 
+            font-size: 1.2rem; color: #bdc3c7; margin-bottom: 5px; 
+            letter-spacing: 2px;
+        }
+        .target-display {
+            font-size: 4rem; color: #fff; line-height: 1;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 숫자 분해 영역 */
+        .partition-container {
+            width: 100%; padding: 20px; background: rgba(255,255,255,0.1);
+            border-radius: 20px; margin-bottom: 30px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* 숫자 박스 */
+        .numbers-row {
+            display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px;
+        }
+        .num-box {
+            width: 45%; height: 110px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-radius: 15px; background: #34495e; color: #7f8c8d;
+            transition: 0.3s; border: 4px solid transparent;
+            position: relative;
+        }
+        .num-label { 
+            font-size: 1rem; margin-bottom: 5px; position: absolute; top: 10px; 
+        }
+        
+        /* 입력창 스타일 (숫자 부분) */
+        .num-input {
+            background: transparent; border: none; color: inherit;
+            font-size: 2.5rem; width: 100%; text-align: center;
+            font-family: 'Jua'; outline: none; margin-top: 15px;
+        }
+        /* 입력창 화살표 제거 */
+        .num-input::-webkit-outer-spin-button,
+        .num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* 소수일 때 스타일 변경 */
+        .is-prime {
+            background: #f1c40f !important; color: #2c3e50 !important;
+            box-shadow: 0 0 20px #f1c40f; transform: scale(1.05);
+            border-color: #fff;
+        }
+
+        /* 슬라이더 영역 (튜토리얼용) */
+        .slider-wrapper { width: 100%; text-align: center; }
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; background: transparent; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 10px; background: #95a5a6; border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 30px; width: 30px; border-radius: 50%;
+            background: #ecf0f1; margin-top: -10px; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* 5. 버튼 및 피드백 */
+        .check-btn {
+            padding: 15px 40px; font-size: 1.5rem; border-radius: 30px; border: none;
+            background: #9b59b6; color: white; cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 5px 0 #8e44ad; transition: 0.1s;
+        }
+        .check-btn:active { transform: translateY(5px); box-shadow: none; }
+        
+        .feedback-msg {
+            height: 30px; margin-top: 20px; font-size: 1.2rem; color: #e74c3c;
+        }
+
+        /* 개념 노트 */
+        .concept-box {
+            margin-top: 50px; background: rgba(255,255,255,0.1); padding: 20px;
+            border-radius: 15px; max-width: 600px; width: 90%; font-size: 0.95rem; line-height: 1.6;
+        }
+        .concept-title { color: #f1c40f; margin-bottom: 10px; font-size: 1.2rem; }
+
+        /* 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: white; color: #333; padding: 30px; border-radius: 20px;
+            text-align: center; width: 300px; animation: popIn 0.3s; border: 5px solid #f1c40f;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>🌌 골드바흐의 파티션</h1>
+    </header>
+
+    <div id="menuScreen">
+        <p style="font-size: 1.2rem; margin-bottom: 30px; opacity: 0.8;">
+            "2보다 큰 모든 짝수는<br>두 소수(Prime Number)의 합으로 나타낼 수 있다."
+        </p>
+        <button class="mode-btn btn-tuto" onclick="startGame('tutorial')">🐣 튜토리얼 (슬라이더)</button>
+        <button class="mode-btn btn-prac" onclick="startGame('practice')">🏫 기본 모드 (직접 입력)</button>
+        <button class="mode-btn btn-chall" onclick="startGame('challenge')">🔥 챌린지 (직접 입력)</button>
+    </div>
+
+    <div id="gameScreen">
+        <div class="target-box">
+            <div class="target-label">TARGET NUMBER</div>
+            <div class="target-display" id="targetNum">--</div>
+        </div>
+
+        <div class="partition-container">
+            <div class="numbers-row">
+                <div class="num-box" id="boxA">
+                    <div class="num-label">첫 번째 수</div>
+                    <input type="number" id="inputA" class="num-input" value="0">
+                </div>
+                <div style="display:flex; align-items:center; font-size:2rem;">+</div>
+                <div class="num-box" id="boxB">
+                    <div class="num-label">두 번째 수</div>
+                    <input type="number" id="inputB" class="num-input" value="0">
+                </div>
+            </div>
+
+            <div class="slider-wrapper" id="sliderWrapper">
+                <input type="range" id="splitSlider" min="0" max="100" value="50">
+                <p style="margin-top: 10px; opacity: 0.6; font-size: 0.9rem;">슬라이더를 움직여 숫자를 쪼개보세요!</p>
+            </div>
+            
+            <p id="inputHint" style="display:none; opacity:0.6; font-size:0.9rem;">
+                숫자 박스를 클릭하여 값을 입력하세요.
+            </p>
+        </div>
+
+        <button class="check-btn" onclick="checkAnswer()">확인 (Check)</button>
+        <div class="feedback-msg" id="feedback"></div>
+
+        <button onclick="showMenu()" style="margin-top:30px; background:none; border:1px solid #aaa; color:#aaa; padding:5px 15px; border-radius:15px; cursor:pointer;">메뉴로 나가기</button>
+    </div>
+
+    <div class="concept-box">
+        <div class="concept-title">📘 골드바흐의 추측이란?</div>
+        1742년 수학자 크리스티안 골드바흐가 제안한 추측입니다.<br>
+        <b>"2보다 큰 모든 짝수는 두 소수의 합으로 나타낼 수 있다."</b><br>
+        아직까지 증명되지도, 반례가 나오지도 않은 수학계의 유명한 난제 중 하나입니다. 여러분이 직접 수를 쪼개며 확인해보세요!
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 style="color:#f1c40f; margin:0;">성공! 🎉</h2>
+            <p id="modalMsg" style="font-size:1.2rem; margin: 20px 0;">완벽한 조합입니다!</p>
+            <button onclick="nextProblem()" style="background:#2ecc71; color:white; border:none; padding:10px 30px; border-radius:20px; font-size:1.2rem; cursor:pointer; font-family:'Jua';">다음 문제 👉</button>
+        </div>
+    </div>
+
+<script>
+    let currentMode = 'tutorial';
+    let targetNumber = 0;
+    let numA = 0;
+    let numB = 0;
+
+    const menuScreen = document.getElementById('menuScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const targetDisplay = document.getElementById('targetNum');
+    const slider = document.getElementById('splitSlider');
+    const sliderWrapper = document.getElementById('sliderWrapper');
+    const inputHint = document.getElementById('inputHint');
+    
+    // 이제 span이 아니라 input 요소입니다.
+    const inputA = document.getElementById('inputA');
+    const inputB = document.getElementById('inputB');
+    
+    const boxA = document.getElementById('boxA');
+    const boxB = document.getElementById('boxB');
+    const feedback = document.getElementById('feedback');
+    const modal = document.getElementById('resultModal');
+
+    // 소수 판별 함수
+    function isPrime(num) {
+        if (num <= 1) return false;
+        if (num === 2) return true;
+        if (num % 2 === 0) return false;
+        const sqrt = Math.sqrt(num);
+        for (let i = 3; i <= sqrt; i += 2) {
+            if (num % i === 0) return false;
+        }
+        return true;
+    }
+
+    function showMenu() {
+        menuScreen.style.display = 'flex';
+        gameScreen.style.display = 'none';
+    }
+
+    function startGame(mode) {
+        currentMode = mode;
+        menuScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        
+        // 모드에 따른 UI 설정
+        if (mode === 'tutorial') {
+            sliderWrapper.style.display = 'block';
+            inputHint.style.display = 'none';
+            // 튜토리얼은 입력창 수정 불가 (슬라이더 전용)
+            inputA.readOnly = true;
+            inputB.readOnly = true;
+            inputA.style.pointerEvents = 'none'; // 클릭 방지
+            inputB.style.pointerEvents = 'none';
+        } else {
+            sliderWrapper.style.display = 'none';
+            inputHint.style.display = 'block';
+            // 기본/챌린지는 입력 가능
+            inputA.readOnly = false;
+            inputB.readOnly = false;
+            inputA.style.pointerEvents = 'auto';
+            inputB.style.pointerEvents = 'auto';
+        }
+
+        nextProblem();
+    }
+
+    function nextProblem() {
+        modal.style.display = 'none';
+        feedback.innerText = "";
+        
+        let min, max;
+        if (currentMode === 'tutorial') { min = 6; max = 30; } 
+        else if (currentMode === 'practice') { min = 32; max = 100; } 
+        else { min = 102; max = 300; } 
+
+        let rand = Math.floor(Math.random() * (max - min + 1)) + min;
+        if (rand % 2 !== 0) rand += 1;
+        targetNumber = rand;
+
+        targetDisplay.innerText = targetNumber;
+
+        // 초기값 설정
+        if (currentMode === 'tutorial') {
+            slider.min = 2;
+            slider.max = targetNumber - 2;
+            slider.value = Math.floor(targetNumber / 2);
+            updateFromSlider();
+        } else {
+            // 직접 입력 모드는 비워두기 (0으로 초기화)
+            numA = 0; numB = 0;
+            inputA.value = '';
+            inputB.value = '';
+            resetBoxStyle();
+        }
+    }
+
+    // 1. 슬라이더 조작 (튜토리얼용)
+    slider.addEventListener('input', updateFromSlider);
+
+    function updateFromSlider() {
+        numA = parseInt(slider.value);
+        numB = targetNumber - numA;
+        updateDisplay();
+    }
+
+    // 2. 직접 입력 조작 (기본/챌린지용)
+    // A를 입력하면 B가 자동 계산되게 할지, 둘 다 입력하게 할지?
+    // -> 편의성을 위해 하나 입력하면 나머지는 자동 계산 (골드바흐는 '조합'을 찾는 것이므로)
+    inputA.addEventListener('input', () => {
+        if(inputA.value === '') return;
+        numA = parseInt(inputA.value);
+        numB = targetNumber - numA;
+        updateDisplay();
+    });
+
+    inputB.addEventListener('input', () => {
+        if(inputB.value === '') return;
+        numB = parseInt(inputB.value);
+        numA = targetNumber - numB;
+        updateDisplay();
+    });
+
+    function updateDisplay() {
+        inputA.value = numA;
+        inputB.value = numB;
+
+        // 시각적 피드백
+        updateBoxStyle(boxA, numA);
+        updateBoxStyle(boxB, numB);
+    }
+
+    function updateBoxStyle(box, num) {
+        if (isPrime(num)) {
+            box.classList.add('is-prime');
+            // [수정] 텍스트 간소화
+            box.querySelector('.num-label').innerText = "소수(Prime)";
+        } else {
+            box.classList.remove('is-prime');
+            // 숫자가 0이나 음수면 라벨 유지, 아니면 합성수
+            if(num > 1) box.querySelector('.num-label').innerText = "합성수";
+            else box.querySelector('.num-label').innerText = (box.id === 'boxA' ? "첫 번째 수" : "두 번째 수");
+        }
+    }
+    
+    function resetBoxStyle() {
+        boxA.classList.remove('is-prime');
+        boxB.classList.remove('is-prime');
+        boxA.querySelector('.num-label').innerText = "첫 번째 수";
+        boxB.querySelector('.num-label').innerText = "두 번째 수";
+    }
+
+    function checkAnswer() {
+        // 빈칸 처리
+        if (inputA.value === '' || inputB.value === '') {
+            feedback.innerText = "숫자를 입력해주세요.";
+            return;
+        }
+
+        const primeA = isPrime(numA);
+        const primeB = isPrime(numB);
+        const sum = numA + numB;
+
+        // 합이 맞는지 우선 확인 (직접 입력 모드에서 오타 가능성)
+        if (sum !== targetNumber) {
+             feedback.innerText = `합이 ${targetNumber}가 되어야 합니다.`;
+             gameScreen.classList.add('shake');
+             setTimeout(() => gameScreen.classList.remove('shake'), 500);
+             return;
+        }
+
+        if (primeA && primeB) {
+            document.getElementById('modalMsg').innerHTML = 
+                `${targetNumber} = ${numA} + ${numB}<br>골드바흐의 추측 확인 완료!`;
+            modal.style.display = 'flex';
+        } else {
+            if (!primeA && !primeB) feedback.innerText = "둘 다 소수가 아닙니다.";
+            else if (!primeA) feedback.innerText = `첫 번째 수(${numA})가 소수가 아닙니다.`;
+            else feedback.innerText = `두 번째 수(${numB})가 소수가 아닙니다.`;
+            
+            gameScreen.classList.add('shake');
+            setTimeout(() => gameScreen.classList.remove('shake'), 500);
+        }
+    }
+
+    // 흔들림 애니메이션
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.3s; }
+    `;
+    document.head.appendChild(styleSheet);
+
+</script>
+</body>
+</html>

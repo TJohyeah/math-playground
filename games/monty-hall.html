@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>몬티홀 게임쇼 | Monty Hall Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* 1. 테마: 화려한 TV 게임쇼 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at top, #2c3e50, #000000);
+            color: #ecf0f1;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* 2. 헤더 */
+        header {
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.5); border-bottom: 2px solid #f1c40f;
+            position: relative; box-shadow: 0 0 20px rgba(241, 196, 15, 0.3);
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: transparent; border: 2px solid #f1c40f; color: #f1c40f;
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; text-decoration: none;
+            transition: 0.3s;
+        }
+        .home-btn:hover { background: #f1c40f; color: #000; }
+        h1 { margin: 0; font-size: 2rem; color: #f1c40f; text-shadow: 0 0 15px #f1c40f; }
+
+        /* 3. 게임 컨테이너 */
+        .container {
+            width: 95%; max-width: 900px;
+            margin-top: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+
+        /* 게임 스테이지 (문 3개) */
+        .stage {
+            display: flex; justify-content: center; gap: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px; border-radius: 20px;
+            border: 2px dashed rgba(241, 196, 15, 0.5);
+            width: 100%; box-sizing: border-box;
+        }
+
+        .door-wrapper {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+
+        .door {
+            width: 120px; height: 180px;
+            background: linear-gradient(to bottom, #c0392b, #8e44ad);
+            border: 4px solid #f39c12; border-radius: 10px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 5rem; cursor: pointer; transition: 0.3s;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        .door:hover { transform: scale(1.05); border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; }
+        
+        .door.selected { border-color: #2ecc71; box-shadow: 0 0 30px #2ecc71; transform: translateY(-10px); }
+        .door.selected::after {
+            content: "👇 내 선택"; position: absolute; top: -35px;
+            font-size: 1.2rem; color: #2ecc71; text-shadow: 0 0 5px #000; width: 100px; text-align: center;
+        }
+
+        .door.opened {
+            background: #fff; border-color: #bdc3c7; cursor: default;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1); transform: scale(0.95);
+        }
+        .door.opened:hover { transform: scale(0.95); box-shadow: none; }
+
+        /* 호스트 메시지 & 액션 패널 */
+        .host-panel {
+            background: #2c3e50; padding: 20px 40px; border-radius: 15px;
+            text-align: center; width: 100%; box-sizing: border-box;
+            border: 2px solid #34495e; min-height: 120px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .host-msg { font-size: 1.5rem; color: #f1c40f; margin-bottom: 15px; }
+        
+        .action-btns { display: none; gap: 20px; }
+        .btn-stay, .btn-switch, .btn-next {
+            padding: 12px 30px; font-size: 1.3rem; border: none; border-radius: 10px;
+            font-family: 'Jua'; cursor: pointer; transition: 0.1s; color: white;
+        }
+        .btn-stay { background: #3498db; box-shadow: 0 5px 0 #2980b9; }
+        .btn-stay:active { transform: translateY(5px); box-shadow: none; }
+        .btn-switch { background: #e74c3c; box-shadow: 0 5px 0 #c0392b; }
+        .btn-switch:active { transform: translateY(5px); box-shadow: none; }
+        .btn-next { background: #2ecc71; box-shadow: 0 5px 0 #27ae60; display: none; }
+        .btn-next:active { transform: translateY(5px); box-shadow: none; }
+
+        /* 통계 패널 */
+        .stats-panel {
+            display: flex; gap: 20px; width: 100%;
+        }
+        .stat-card {
+            flex: 1;

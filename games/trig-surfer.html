@@ -6,7 +6,7 @@
     <title>삼각함수 파도타기 | Trig Surfer</title>
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     <style>
-        /* 기본 테마 및 레이아웃 (이전과 동일) */
+        /* 기본 테마 및 레이아웃 */
         body {
             font-family: 'Jua', sans-serif;
             margin: 0; padding: 0;
@@ -40,7 +40,7 @@
             margin-top: 10px; gap: 15px;
         }
 
-        /* 캔버스 테두리 디자인 */
+        /* 캔버스 영역 */
         .canvas-wrapper {
             flex: 2; width: 100%;
             background: rgba(255,255,255,0.95);
@@ -50,7 +50,7 @@
         }
         #gameCanvas { width: 100%; height: 100%; display: block; }
 
-        /* 컨트롤 패널 (이전과 동일) */
+        /* 컨트롤 패널 */
         .control-panel {
             flex: 1; width: 100%; min-height: 200px;
             background: rgba(255,255,255,0.15);
@@ -89,6 +89,7 @@
         .ride-btn:active { transform: translateY(5px); box-shadow: none; }
         .ride-btn:disabled { background: #b2bec3; color: #636e72; box-shadow: none; cursor: not-allowed; }
 
+        /* 결과 모달 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100;
         }
@@ -115,7 +116,7 @@
     </header>
 
     <div class="game-container">
-        <div class="canvas-wrapper">
+        <div class="canvas-wrapper" id="canvasWrapper">
             <canvas id="gameCanvas"></canvas>
         </div>
 
@@ -170,10 +171,9 @@
     const MIN_Y = -4;
     const MAX_Y = 4;
 
-    // [중요] 캔버스 내부 여백(Padding) 설정
-    // 0~4π와 -4~4 범위가 이 여백 안쪽에서 그려지게 됩니다.
-    const PADDING_X = 50; // 좌우 여백 (픽셀 단위)
-    const PADDING_Y = 50; // 상하 여백 (픽셀 단위)
+    // 캔버스 여백 (안전 영역 확보)
+    const PADDING_X = 60; 
+    const PADDING_Y = 60; 
 
     // 게임 상태
     let gameState = 'editing'; 
@@ -183,7 +183,7 @@
     let coins = [];
     let surfer = { x: 0, y: 0 };
 
-    // DOM 요소 (이전과 동일)
+    // DOM 요소
     const rangeA = document.getElementById('rangeA');
     const rangeB = document.getElementById('rangeB');
     const rangeC = document.getElementById('rangeC');
@@ -195,6 +195,11 @@
     const rideBtn = document.getElementById('rideBtn');
     const levelDisplay = document.getElementById('levelDisplay');
     const modal = document.getElementById('resultModal');
+
+    // 화면이 완전히 불려진 후에 초기화 실행 (오류 방지)
+    window.onload = () => {
+        init();
+    };
 
     function init() {
         resizeCanvas();
@@ -210,8 +215,9 @@
     }
 
     function resizeCanvas() {
-        canvasWidth = canvas.parentElement.clientWidth;
-        canvasHeight = canvas.parentElement.clientHeight;
+        // 부모 요소의 크기를 가져오되, 비정상적으로 0일 경우 기본값 세팅
+        canvasWidth = canvas.parentElement.clientWidth || 800;
+        canvasHeight = canvas.parentElement.clientHeight || 400;
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         draw();
@@ -253,18 +259,15 @@
         return p.a * Math.sin(p.b * (x - p.c * Math.PI)) + p.d;
     }
 
-    // [수정] 좌표 매핑: 여백(Padding)을 반영하여 스케일 계산
+    // 좌표 매핑 함수 (여백 완벽 적용)
     function toCanvasX(mathX) {
-        // 실제 그릴 수 있는 유효 너비
-        const effectiveWidth = canvasWidth - 2 * PADDING_X;
-        // 여백만큼 이동 후, 유효 너비 안에서 매핑
+        const effectiveWidth = canvasWidth - (2 * PADDING_X);
         return PADDING_X + (mathX / MAX_X) * effectiveWidth;
     }
+    
     function toCanvasY(mathY) {
-        // 실제 그릴 수 있는 유효 높이
-        const effectiveHeight = canvasHeight - 2 * PADDING_Y;
+        const effectiveHeight = canvasHeight - (2 * PADDING_Y);
         const range = MAX_Y - MIN_Y;
-        // 여백만큼 띄우고(위쪽 여백), 유효 높이 안에서 반전시켜 매핑
         return PADDING_Y + effectiveHeight - ((mathY - MIN_Y) / range) * effectiveHeight;
     }
 
@@ -383,8 +386,12 @@
     }
 
     function draw() {
+        // 그리기 전에 캔버스 크기 방어코드 적용
+        if(canvasWidth === 0 || canvasHeight === 0) return;
+
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
+        drawGrid(); // 배경 모눈종이 추가
         drawAxes();
         drawPlayerWave();
         drawCoins();
@@ -393,4 +400,150 @@
             drawSurfer();
         } else {
             surfer.x = 0;
-            drawSurfer
+            drawSurfer();
+        }
+    }
+
+    // [새 기능] 배경 모눈종이 그리기
+    function drawGrid() {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(178, 190, 195, 0.3)'; // 연한 회색 점선
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        // 가로선 (y축 눈금)
+        for(let i = MIN_Y; i <= MAX_Y; i++) {
+            let cy = toCanvasY(i);
+            ctx.moveTo(toCanvasX(0), cy);
+            ctx.lineTo(toCanvasX(MAX_X), cy);
+        }
+        // 세로선 (x축 눈금, π/2 단위)
+        for(let i = 0; i <= 8; i++) {
+            let cx = toCanvasX(i * Math.PI / 2);
+            ctx.moveTo(cx, toCanvasY(MIN_Y));
+            ctx.lineTo(cx, toCanvasY(MAX_Y));
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); // 원상복구
+    }
+
+    function drawAxes() {
+        ctx.beginPath();
+        ctx.strokeStyle = '#2d3436'; // 축은 진하게
+        ctx.lineWidth = 2;
+        
+        let originCX = toCanvasX(0);
+        let originCY = toCanvasY(0);
+        let endCX = toCanvasX(MAX_X);
+        let topCY = toCanvasY(MAX_Y);
+        let bottomCY = toCanvasY(MIN_Y);
+
+        // X축 그리기
+        ctx.moveTo(originCX - 20, originCY); 
+        ctx.lineTo(endCX + 20, originCY);
+        // X축 화살표
+        ctx.lineTo(endCX + 10, originCY - 5); 
+        ctx.moveTo(endCX + 20, originCY); 
+        ctx.lineTo(endCX + 10, originCY + 5);
+
+        // Y축 그리기
+        ctx.moveTo(originCX, bottomCY + 20); 
+        ctx.lineTo(originCX, topCY - 20);
+        // Y축 화살표
+        ctx.lineTo(originCX - 5, topCY - 10); 
+        ctx.moveTo(originCX, topCY - 20); 
+        ctx.lineTo(originCX + 5, topCY - 10);
+        
+        ctx.stroke();
+
+        // 눈금 텍스트 설정
+        ctx.fillStyle = '#2d3436';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        
+        // 원점 'O'
+        ctx.fillText('O', originCX - 15, originCY + 20);
+        // 축 이름 'x', 'y'
+        ctx.fillText('x', endCX + 20, originCY + 20);
+        ctx.fillText('y', originCX - 20, topCY - 15);
+
+        // X축 눈금 (π 단위)
+        for(let i=1; i<=4; i++) {
+            let cx = toCanvasX(i * Math.PI);
+            ctx.beginPath(); ctx.moveTo(cx, originCY-5); ctx.lineTo(cx, originCY+5); ctx.stroke();
+            ctx.fillText(i===1?'π':i+'π', cx, originCY+25);
+        }
+
+        // Y축 눈금 (-4 ~ 4)
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for(let i=-3; i<=3; i++) {
+            if(i===0) continue;
+            let cy = toCanvasY(i);
+            ctx.beginPath(); ctx.moveTo(originCX-5, cy); ctx.lineTo(originCX+5, cy); ctx.stroke();
+            ctx.fillText(i, originCX-10, cy);
+        }
+    }
+
+    function drawPlayerWave() {
+        ctx.beginPath();
+        ctx.strokeStyle = '#0984e3';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#74b9ff';
+
+        for (let x = 0; x <= MAX_X; x += 0.05) {
+            let y = getY(x, params);
+            let cx = toCanvasX(x);
+            let cy = toCanvasY(y);
+            if (x === 0) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0; 
+    }
+
+    function drawCoins() {
+        coins.forEach(coin => {
+            if (!coin.collected) {
+                let cx = toCanvasX(coin.x);
+                let cy = toCanvasY(coin.y);
+                
+                ctx.beginPath();
+                ctx.arc(cx, cy, 10, 0, Math.PI*2);
+                ctx.fillStyle = '#f1c40f'; ctx.fill();
+                ctx.strokeStyle = '#f39c12'; ctx.lineWidth=2; ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('$', cx, cy);
+            }
+        });
+    }
+
+    function drawSurfer() {
+        let y = getY(surfer.x, params);
+        let cx = toCanvasX(surfer.x);
+        let cy = toCanvasY(y);
+
+        let h = 0.01;
+        let dy = getY(surfer.x + h, params) - y;
+        let angle = Math.atan2(-dy, h); 
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        
+        ctx.font = '35px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        // 이모지가 궤도 위에 살짝 얹혀있는 것처럼 보이게 y축 이동
+        ctx.fillText('🏄‍♂️', 0, 10);
+        
+        ctx.restore();
+    }
+
+</script>
+</body>
+</html>

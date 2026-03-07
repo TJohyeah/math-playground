@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삼각함수 파도타기 | Trig Surfer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 전체 테마 설정 (바다, 서핑 느낌) */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: linear-gradient(to bottom, #74b9ff, #0984e3);
+            color: #fff;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; overflow: hidden;
+            user-select: none;
+        }
+
+        /* 2. 헤더 */
+        header {
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            position: relative; z-index: 10;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: rgba(255,255,255,0.2); border: 2px solid #fff; color: #fff;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; 
+            text-decoration: none; font-size: 1rem; transition: 0.3s;
+        }
+        .home-btn:hover { background: #fff; color: #0984e3; }
+        h1 { margin: 0; font-size: 2rem; text-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+
+        /* 3. 게임 레이아웃 */
+        .game-container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 95%; max-width: 1000px; height: calc(100vh - 80px);
+            margin-top: 10px; gap: 15px;
+        }
+
+        /* 캔버스 (파도 영역) */
+        .canvas-wrapper {
+            flex: 2; width: 100%;
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px; border: 4px solid #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative; overflow: hidden;
+        }
+        #gameCanvas { width: 100%; height: 100%; display: block; }
+
+        /* 컨트롤 패널 */
+        .control-panel {
+            flex: 1; width: 100%; min-height: 200px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px; padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: space-between;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .level-indicator {
+            text-align: center; font-size: 1.2rem; color: #ffeaa7; margin-bottom: 5px;
+        }
+
+        /* 수식 표시 */
+        .equation-display {
+            font-size: 2rem; text-align: center; margin-bottom: 15px;
+            color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+        }
+        .var-a { color: #ff7675; }
+        .var-b { color: #55efc4; }
+        .var-c { color: #fdcb6e; }
+        .var-d { color: #e056fd; }
+
+        /* 슬라이더 그룹 */
+        .sliders-group {
+            display: flex; justify-content: space-around; gap: 15px; flex-wrap: wrap;
+        }
+        .slider-item {
+            display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 150px;
+            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px;
+        }
+        .slider-label { font-size: 1.1rem; margin-bottom: 8px; }
+        input[type=range] {
+            width: 100%; cursor: pointer; accent-color: #fff;
+        }
+
+        /* 파도 타기 버튼 */
+        .ride-btn {
+            width: 100%; padding: 15px; margin-top: 15px;
+            font-family: 'Jua', sans-serif; font-size: 1.5rem; color: #0984e3;
+            background: #fff; border: none; border-radius: 15px; cursor: pointer;
+            box-shadow: 0 5px 0 #dfe6e9; transition: 0.1s; font-weight: bold;
+        }
+        .ride-btn:active { transform: translateY(5px); box-shadow: none; }
+        .ride-btn:disabled { background: #b2bec3; color: #636e72; box-shadow: none; cursor: not-allowed; }
+
+        /* 결과 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 25px; text-align: center; color: #2d3436;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5); border: 5px solid #0984e3;
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h2 { font-size: 2.5rem; margin: 0 0 15px 0; color: #0984e3; }
+        .next-btn {
+            background: #0984e3; color: white; padding: 12px 30px; border: none;
+            border-radius: 20px; font-size: 1.3rem; cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 5px 0 #0652dd; margin-top: 20px;
+        }
+        .next-btn:active { transform: translateY(5px); box-shadow: none; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>🌊 삼각함수 파도타기 (Trig Surfer)</h1>
+    </header>
+
+    <div class="game-container">
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div class="control-panel">
+            <div class="level-indicator" id="levelDisplay">Level 1: 진폭(a)을 조절하라!</div>
+            
+            <div class="equation-display">
+                y = <span class="var-a" id="valA">1</span> 
+                sin( <span class="var-b" id="valB">1</span>(x - <span class="var-c" id="valC">0</span>) ) 
+                + <span class="var-d" id="valD">0</span>
+            </div>
+            
+            <div class="sliders-group">
+                <div class="slider-item">
+                    <label class="slider-label var-a">진폭 (a) : <span id="dispA">1</span></label>
+                    <input type="range" id="rangeA" min="-3" max="3" step="0.5" value="1">
+                </div>
+                <div class="slider-item">
+                    <label class="slider-label var-b">주기 (b) : <span id="dispB">1</span></label>
+                    <input type="range" id="rangeB" min="0.5" max="3" step="0.5" value="1">
+                </div>
+                <div class="slider-item">
+                    <label class="slider-label var-c">x 이동 (c) : <span id="dispC">0</span></label>
+                    <input type="range" id="rangeC" min="-2" max="2" step="0.5" value="0">
+                </div>
+                <div class="slider-item">
+                    <label class="slider-label var-d">y 이동 (d) : <span id="dispD">0</span></label>
+                    <input type="range" id="rangeD" min="-3" max="3" step="0.5" value="0">
+                </div>
+            </div>
+
+            <button class="ride-btn" id="rideBtn" onclick="startRide()">🏄‍♂️ 파도 타기!</button>
+        </div>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Awesome! 🌟</h2>
+            <p id="modalMsg" style="font-size: 1.3rem;">모든 동전을 획득했습니다!</p>
+            <button class="next-btn" id="modalBtn" onclick="nextLevel()">다음 레벨로 👉</button>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let canvasWidth, canvasHeight;
+    
+    // 수학 좌표계 범위 (x: 0 ~ 4π, y: -4 ~ 4)
+    const MAX_X = 4 * Math.PI; 
+    const MIN_Y = -4;
+    const MAX_Y = 4;
+
+    // 게임 상태
+    let gameState = 'editing'; // editing, riding, done
+    let level = 1;
+    
+    // 플레이어 조작 변수
+    let params = { a: 1, b: 1, c: 0, d: 0 };
+    // 목표(타겟) 변수
+    let targetParams = { a: 2, b: 1, c: 0, d: 0 };
+    
+    // 오브젝트
+    let coins = [];
+    let surfer = { x: 0, y: 0 };
+
+    // DOM
+    const rangeA = document.getElementById('rangeA');
+    const rangeB = document.getElementById('rangeB');
+    const rangeC = document.getElementById('rangeC');
+    const rangeD = document.getElementById('rangeD');
+    const dispA = document.getElementById('dispA');
+    const dispB = document.getElementById('dispB');
+    const dispC = document.getElementById('dispC');
+    const dispD = document.getElementById('dispD');
+    const rideBtn = document.getElementById('rideBtn');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const modal = document.getElementById('resultModal');
+
+    function init() {
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        rangeA.addEventListener('input', updateParams);
+        rangeB.addEventListener('input', updateParams);
+        rangeC.addEventListener('input', updateParams);
+        rangeD.addEventListener('input', updateParams);
+
+        loadLevel(level);
+        gameLoop();
+    }
+
+    function resizeCanvas() {
+        canvasWidth = canvas.parentElement.clientWidth;
+        canvasHeight = canvas.parentElement.clientHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        draw();
+    }
+
+    // 파이(π) 문자열 포맷 함수
+    function formatPi(val) {
+        if (val === 0) return "0";
+        if (val === 1) return "π";
+        if (val === -1) return "-π";
+        if (val === 0.5) return "π/2";
+        if (val === -0.5) return "-π/2";
+        if (val === 1.5) return "3π/2";
+        if (val === -1.5) return "-3π/2";
+        if (val === 2) return "2π";
+        if (val === -2) return "-2π";
+        return val + "π";
+    }
+
+    function updateParams() {
+        if(gameState !== 'editing') return;
+        
+        params.a = parseFloat(rangeA.value);
+        params.b = parseFloat(rangeB.value);
+        params.c = parseFloat(rangeC.value);
+        params.d = parseFloat(rangeD.value);
+
+        // UI 텍스트 업데이트
+        document.getElementById('valA').innerText = params.a;
+        document.getElementById('valB').innerText = params.b === 1 ? "" : params.b;
+        document.getElementById('valC').innerText = formatPi(params.c);
+        document.getElementById('valD').innerText = params.d;
+
+        dispA.innerText = params.a;
+        dispB.innerText = params.b;
+        dispC.innerText = formatPi(params.c);
+        dispD.innerText = params.d;
+    }
+
+    // 수학 함수: y = a * sin(b(x - c*π)) + d
+    function getY(x, p) {
+        return p.a * Math.sin(p.b * (x - p.c * Math.PI)) + p.d;
+    }
+
+    // 좌표 매핑
+    function toCanvasX(mathX) {
+        return (mathX / MAX_X) * canvasWidth;
+    }
+    function toCanvasY(mathY) {
+        // Y좌표는 위가 +, 아래가 -이므로 반전
+        const range = MAX_Y - MIN_Y;
+        return canvasHeight - ((mathY - MIN_Y) / range) * canvasHeight;
+    }
+
+    function loadLevel(lvl) {
+        gameState = 'editing';
+        rideBtn.disabled = false;
+        modal.style.display = 'none';
+        
+        // 레벨별 타겟 생성 및 슬라이더 잠금 설정
+        rangeA.disabled = false; rangeB.disabled = true; rangeC.disabled = true; rangeD.disabled = true;
+        
+        if (lvl === 1) {
+            levelDisplay.innerText = "Level 1: 진폭(a)을 조절하라!";
+            targetParams = { a: (Math.random()>0.5?2:-2), b: 1, c: 0, d: 0 };
+            resetSliders({a:1, b:1, c:0, d:0});
+            rangeA.disabled = false;
+        } else if (lvl === 2) {
+            levelDisplay.innerText = "Level 2: 평행이동(d)을 추가하라!";
+            targetParams = { a: 2, b: 1, c: 0, d: (Math.random()>0.5?2:-2) };
+            resetSliders({a:1, b:1, c:0, d:0});
+            rangeA.disabled = false; rangeD.disabled = false;
+        } else if (lvl === 3) {
+            levelDisplay.innerText = "Level 3: 주기(b)의 마술사!";
+            let bVals = [0.5, 2];
+            targetParams = { a: 2, b: bVals[Math.floor(Math.random()*bVals.length)], c: 0, d: 0 };
+            resetSliders({a:2, b:1, c:0, d:0});
+            rangeB.disabled = false;
+        } else if (lvl === 4) {
+            levelDisplay.innerText = "Level 4: x축 평행이동(c)의 비밀!";
+            let cVals = [0.5, 1, -0.5];
+            targetParams = { a: 2, b: 1, c: cVals[Math.floor(Math.random()*cVals.length)], d: 0 };
+            resetSliders({a:2, b:1, c:0, d:0});
+            rangeC.disabled = false;
+        } else {
+            levelDisplay.innerText = "Level 5: 파도타기 마스터 (종합)";
+            let cVals = [0.5, 1, -0.5, 0];
+            targetParams = { 
+                a: Math.floor(Math.random()*3)+1, 
+                b: (Math.random()>0.5?2:1), 
+                c: cVals[Math.floor(Math.random()*cVals.length)], 
+                d: Math.floor(Math.random()*3)-1 
+            };
+            resetSliders({a:1, b:1, c:0, d:0});
+            rangeA.disabled=false; rangeB.disabled=false; rangeC.disabled=false; rangeD.disabled=false;
+        }
+
+        // 동전 생성 (타겟 그래프 위에 일정 간격으로 배치)
+        coins = [];
+        for (let i = 0; i <= 8; i++) {
+            let mathX = (i / 8) * MAX_X;
+            let mathY = getY(mathX, targetParams);
+            coins.push({ x: mathX, y: mathY, collected: false });
+        }
+
+        surfer.x = 0;
+        updateParams();
+    }
+
+    function resetSliders(p) {
+        rangeA.value = p.a; rangeB.value = p.b; rangeC.value = p.c; rangeD.value = p.d;
+        updateParams();
+    }
+
+    function startRide() {
+        if(gameState !== 'editing') return;
+        gameState = 'riding';
+        rideBtn.disabled = true;
+        surfer.x = 0;
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+        if (gameState === 'riding') {
+            surfer.x += 0.05; // 서퍼 이동 속도
+            if (surfer.x > MAX_X) {
+                checkResult();
+                return;
+            }
+            
+            let surferY = getY(surfer.x, params);
+
+            // 동전 충돌 체크
+            coins.forEach(coin => {
+                if (!coin.collected) {
+                    let dx = surfer.x - coin.x;
+                    let dy = surferY - coin.y;
+                    let dist = Math.hypot(dx, dy);
+                    if (dist < 0.3) { // 충돌 판정 반경
+                        coin.collected = true;
+                    }
+                }
+            });
+        }
+    }
+
+    function checkResult() {
+        gameState = 'done';
+        let allCollected = coins.every(c => c.collected);
+        
+        if (allCollected) {
+            document.getElementById('modalTitle').innerText = "Awesome! 🏄‍♂️";
+            document.getElementById('modalTitle').style.color = "#0984e3";
+            document.getElementById('modalMsg').innerText = "완벽한 파도를 만들었습니다!";
+            document.getElementById('modalBtn').innerText = "다음 레벨로 👉";
+            document.getElementById('modalBtn').onclick = () => { level++; loadLevel(level); };
+        } else {
+            document.getElementById('modalTitle').innerText = "Wipeout! 💦";
+            document.getElementById('modalTitle').style.color = "#e74c3c";
+            document.getElementById('modalMsg').innerText = "파도 모양이 맞지 않아 넘어졌습니다.";
+            document.getElementById('modalBtn').innerText = "다시 도전 💪";
+            document.getElementById('modalBtn').onclick = () => loadLevel(level);
+        }
+        modal.style.display = 'flex';
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        drawAxes();
+        drawPlayerWave();
+        drawCoins();
+        
+        if (gameState === 'riding') {
+            drawSurfer();
+        } else {
+            // 대기 중일 때는 출발선에 서퍼 그림
+            surfer.x = 0;
+            drawSurfer();
+        }
+    }
+
+    function drawAxes() {
+        ctx.beginPath();
+        ctx.strokeStyle = '#b2bec3';
+        ctx.lineWidth = 1;
+        // X축
+        let originCY = toCanvasY(0);
+        ctx.moveTo(0, originCY); ctx.lineTo(canvasWidth, originCY);
+        // Y축
+        let originCX = toCanvasX(0);
+        ctx.moveTo(originCX, 0); ctx.lineTo(originCX, canvasHeight);
+        ctx.stroke();
+
+        // X축 눈금 (π 단위)
+        ctx.fillStyle = '#636e72';
+        ctx.font = '14px sans-serif';
+        for(let i=1; i<=4; i++) {
+            let cx = toCanvasX(i * Math.PI);
+            ctx.beginPath(); ctx.moveTo(cx, originCY-5); ctx.lineTo(cx, originCY+5); ctx.stroke();
+            ctx.fillText(i===1?'π':i+'π', cx-10, originCY+20);
+        }
+        // Y축 눈금
+        for(let i=-3; i<=3; i++) {
+            if(i===0) continue;
+            let cy = toCanvasY(i);
+            ctx.beginPath(); ctx.moveTo(originCX-5, cy); ctx.lineTo(originCX+5, cy); ctx.stroke();
+            ctx.fillText(i, originCX+10, cy+5);
+        }
+    }
+
+    function drawPlayerWave() {
+        ctx.beginPath();
+        ctx.strokeStyle = '#0984e3';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#74b9ff';
+
+        for (let x = 0; x <= MAX_X; x += 0.05) {
+            let y = getY(x, params);
+            let cx = toCanvasX(x);
+            let cy = toCanvasY(y);
+            if (x === 0) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0; // 초기화
+    }
+
+    function drawCoins() {
+        coins.forEach(coin => {
+            if (!coin.collected) {
+                let cx = toCanvasX(coin.x);
+                let cy = toCanvasY(coin.y);
+                
+                // 동전 그리기 (노란색 원)
+                ctx.beginPath();
+                ctx.arc(cx, cy, 10, 0, Math.PI*2);
+                ctx.fillStyle = '#f1c40f'; ctx.fill();
+                ctx.strokeStyle = '#f39c12'; ctx.lineWidth=2; ctx.stroke();
+                
+                // 동전 안쪽 무늬
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('$', cx, cy);
+            }
+        });
+    }
+
+    function drawSurfer() {
+        let y = getY(surfer.x, params);
+        let cx = toCanvasX(surfer.x);
+        let cy = toCanvasY(y);
+
+        // 기울기(미분) 계산하여 이모지 회전
+        let h = 0.01;
+        let dy = getY(surfer.x + h, params) - y;
+        let angle = Math.atan2(-dy, h); // 캔버스 y축 반전 고려
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        
+        ctx.font = '30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('🏄‍♂️', 0, 10);
+        
+        ctx.restore();
+    }
+
+    init();
+
+</script>
+</body>
+</html>

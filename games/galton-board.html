@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>갈톤의 확률 실험실 | Galton Board</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* 1. 기본 테마 설정 */
+        body {
+            font-family: 'Jua', sans-serif;
+            margin: 0; padding: 0;
+            background: #1e272e;
+            color: #d2dae2;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        /* 2. 헤더 */
+        header {
+            width: 100%; padding: 15px 0;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .home-btn {
+            position: absolute; left: 20px;
+            background: transparent; border: 2px solid #0fbcf9; color: #0fbcf9;
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; text-decoration: none;
+            transition: 0.3s;
+        }
+        .home-btn:hover { background: #0fbcf9; color: #1e272e; }
+        h1 { margin: 0; font-size: 2rem; color: #0fbcf9; text-shadow: 0 0 10px rgba(15, 188, 249, 0.5); }
+
+        /* 3. 메인 컨테이너 */
+        .container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 95%; max-width: 900px; margin-top: 20px; gap: 20px;
+        }
+
+        /* 컨트롤 패널 */
+        .control-panel {
+            width: 100%; background: #2f3640; padding: 20px; border-radius: 15px;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #353b48; box-sizing: border-box;
+        }
+
+        .slider-group { flex: 1; min-width: 250px; text-align: center; margin-right: 20px; }
+        .slider-label { font-size: 1.2rem; color: #ffdd59; margin-bottom: 10px; display: block; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #0fbcf9; }
+        
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .drop-btn {
+            background: #0be881; color: #1e272e; border: none; padding: 10px 20px;
+            border-radius: 10px; font-size: 1.2rem; cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 4px 0 #05c46b; transition: 0.1s;
+        }
+        .drop-btn:active { transform: translateY(4px); box-shadow: none; }
+        .reset-btn {
+            background: #ff5e57; color: white; border: none; padding: 10px 20px;
+            border-radius: 10px; font-size: 1.2rem; cursor: pointer; font-family: 'Jua';
+            box-shadow: 0 4px 0 #ff3f34; transition: 0.1s;
+        }
+        .reset-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        /* 캔버스 래퍼 */
+        .canvas-wrapper {
+            width: 100%; max-width: 700px; aspect-ratio: 1 / 1;
+            background: #2f3640; border-radius: 20px; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            border: 4px solid #718093;
+            position: relative;
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* 상태 표시줄 */
+        .stats {
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 10px;
+            font-size: 1rem; color: #d2dae2;
+        }
+
+        /* 하단 설명(개념) 박스 */
+        .explanation-box {
+            width: 100%; background: #2f3640; padding: 25px; border-radius: 15px;
+            box-sizing: border-box; line-height: 1.6; margin-bottom: 40px;
+            border-left: 5px solid #0fbcf9; font-family: 'Noto Sans KR', sans-serif;
+        }
+        .explanation-box h2 { color: #0fbcf9; margin-top: 0; font-family: 'Jua'; }
+        .explanation-box h3 { color: #ffdd59; margin-bottom: 5px; font-family: 'Jua'; }
+        .explanation-box p { margin-top: 5px; color: #d2dae2; font-size: 1rem; }
+        .highlight { color: #0be881; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../../index.html" class="home-btn">🏠 홈</a>
+        <h1>🔬 갈톤의 확률 실험실 (Galton Board)</h1>
+    </header>
+
+    <div class="container">
+        
+        <div class="control-panel">
+            <div class="slider-group">
+                <label class="slider-label" for="probSlider">
+                    👉 구슬이 '오른쪽'으로 떨어질 확률 ($p$): <span id="probVal" style="color:#fff;">0.50</span>
+                </label>
+                <input type="range" id="probSlider" min="0.1" max="0.9" step="0.05" value="0.5">
+            </div>
+            
+            <div class="btn-group">
+                <button class="drop-btn" onclick="spawnBalls(10)">구슬 10개</button>
+                <button class="drop-btn" onclick="spawnBalls(100)">구슬 100개</button>
+                <button class="drop-btn" style="background:#0fbcf9; box-shadow:0 4px 0 #0bc2f9;" onclick="spawnBalls(500)">+ 500개 쏟기!</button>
+                <button class="reset-btn" onclick="resetBoard()">초기화</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="boardCanvas"></canvas>
+            <div class="stats">
+                낙하한 구슬: <span id="totalBalls" style="color:#ffdd59; font-weight:bold;">0</span> 개
+            </div>
+        </div>
+
+        <div class="explanation-box">
+            <h2>📘 갈톤 보드에 숨겨진 수학의 비밀</h2>
+            
+            <h3>1. 이항분포 (Binomial Distribution)</h3>
+            <p>
+                구슬이 핀에 부딪힐 때마다 왼쪽 또는 오른쪽으로 떨어집니다. 오른쪽으로 떨어질 확률을 $p$라고 할 때, 구슬이 $n$개의 층을 통과하여 특정 위치(오른쪽으로 $x$번 이동)에 도달할 확률은 <b>이항분포 $B(n, p)$</b>를 따릅니다. 확률 $p=0.5$일 때, 구슬은 중앙에 떨어질 확률이 가장 높습니다.
+            </p>
+
+            <h3>2. 정규분포로의 수렴 (큰 수의 법칙)</h3>
+            <p>
+                떨어뜨리는 구슬의 개수가 적을 때는 결과가 들쭉날쭉하지만, 구슬을 수백, 수천 개 떨어뜨리면 바닥에 쌓인 구슬의 형태는 완벽하고 부드러운 <b>종 모양의 곡선(정규분포 곡선)</b>에 가까워집니다. 이는 통계적 확률이 수학적 확률에 가까워짐을 의미합니다.
+            </p>
+
+            <h3>3. 확률 조작 실험 (비대칭)</h3>
+            <p>
+                만약 선풍기를 틀어서 오른쪽으로 떨어질 확률($p$)을 <span class="highlight">0.8</span>로 올리면 어떻게 될까요? 평균 기댓값이 이동하여 그래프가 오른쪽으로 쏠리게 됩니다. 슬라이더를 움직여 직접 실험해 보세요!
+            </p>
+        </div>
+
+    </div>
+
+<script>
+    const canvas = document.getElementById('boardCanvas');
+    const ctx = canvas.getContext('2d');
+    const probSlider = document.getElementById('probSlider');
+    const probVal = document.getElementById('probVal');
+    const totalBallsDisplay = document.getElementById('totalBalls');
+
+    let cw, ch;
+    const ROWS = 14; // 핀의 층수
+    const BINS = ROWS + 1; // 바닥 칸의 수
+    let binCounts = new Array(BINS).fill(0);
+    let maxBinCount = 0; // 그래프 스케일링용
+    let totalDropped = 0;
+
+    let pRight = 0.5; // 오른쪽으로 떨어질 확률
+    let balls = []; // 현재 움직이는 구슬들
+    let pendingBalls = 0; // 아직 떨어뜨려야 할 구슬 수
+    let spawnFrame = 0;
+
+    // 캔버스 크기 및 좌표 설정용 변수
+    let pegRadius = 4;
+    let ballRadius = 4;
+    let startY, startX, spacingX, spacingY;
+    let binHeight;
+
+    window.onload = () => {
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        probSlider.addEventListener('input', updateProbability);
+        gameLoop();
+    };
+
+    function resizeCanvas() {
+        cw = canvas.parentElement.clientWidth;
+        ch = canvas.parentElement.clientHeight;
+        canvas.width = cw;
+        canvas.height = ch;
+
+        // 레이아웃 계산
+        spacingY = (ch * 0.6) / ROWS; 
+        spacingX = (cw * 0.8) / ROWS;
+        startY = ch * 0.1;
+        startX = cw / 2;
+        binHeight = ch * 0.25; // 바닥에 쌓이는 막대그래프 최대 높이
+
+        // 해상도에 따른 크기 조절
+        pegRadius = cw * 0.005;
+        ballRadius = cw * 0.006;
+    }
+
+    function updateProbability() {
+        pRight = parseFloat(probSlider.value);
+        probVal.innerText = pRight.toFixed(2);
+    }
+
+    function resetBoard() {
+        balls = [];
+        pendingBalls = 0;
+        binCounts.fill(0);
+        maxBinCount = 0;
+        totalDropped = 0;
+        totalBallsDisplay.innerText = "0";
+    }
+
+    function spawnBalls(count) {
+        pendingBalls += count;
+    }
+
+    // 좌표 계산 유틸리티
+    function getPegPos(r, c) {
+        let x = startX + (c - r / 2) * spacingX;
+        let y = startY + r * spacingY;
+        return { x, y };
+    }
+
+    class Ball {
+        constructor() {
+            this.row = 0;
+            this.col = 0;
+            let pos = getPegPos(0, 0);
+            
+            // 약간의 무작위성을 주어 겹침 방지
+            this.x = pos.x + (Math.random() - 0.5) * 5; 
+            this.y = pos.y - 15; 
+            
+            this.targetRow = 1;
+            this.targetCol = Math.random() < pRight ? 1 : 0;
+            this.progress = 0;
+            this.speed = 0.05 + Math.random() * 0.02; // 떨어지는 속도 약간 다르게
+            this.done = false;
+        }
+
+        update() {
+            if (this.done) return;
+            
+            this.progress += this.speed;
+            
+            if (this.progress >= 1) {
+                // 한 층 내려감
+                this.row = this.targetRow;
+                this.col = this.targetCol;
+                this.progress = 0;
+                
+                // 바닥 도착
+                if (this.row >= ROWS) {
+                    this.done = true;
+                    binCounts[this.col]++;
+                    totalDropped++;
+                    totalBallsDisplay.innerText = totalDropped;
+                    if (binCounts[this.col] > maxBinCount) maxBinCount = binCounts[this.col];
+                    return;
+                }
+                
+                // 다음 타겟 설정
+                this.targetRow = this.row + 1;
+                this.targetCol = this.col + (Math.random() < pRight ? 1 : 0);
+            }
+
+            // 이동 애니메이션 (포물선 느낌을 위해 sin 활용)
+            let startPos = getPegPos(this.row, this.col);
+            let endPos = getPegPos(this.targetRow, this.targetCol);
+            
+            let arc = Math.sin(this.progress * Math.PI) * (spacingY * 0.3); // 통통 튀는 효과
+
+            this.x = startPos.x + (endPos.x - startPos.x) * this.progress;
+            this.y = startPos.y + (endPos.y - startPos.y) * this.progress - arc;
+        }
+
+        draw(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffdd59'; // 구슬 색상 (노란색)
+            ctx.fill();
+            ctx.strokeStyle = '#d2dae2';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+        // 구슬 생성 로직 (너무 한꺼번에 생기지 않도록 분산)
+        if (pendingBalls > 0) {
+            let spawnRate = pendingBalls > 100 ? 5 : 1; // 500개일 땐 한 프레임에 5개씩 생성
+            for(let i=0; i<spawnRate; i++) {
+                if(pendingBalls > 0) {
+                    balls.push(new Ball());
+                    pendingBalls--;
+                }
+            }
+        }
+
+        // 구슬 위치 업데이트
+        balls.forEach(ball => ball.update());
+        // 바닥에 도착한 구슬 제거 (메모리 관리)
+        balls = balls.filter(ball => !ball.done);
+    }
+
+    function draw() {
+        if (!cw) return;
+        ctx.clearRect(0, 0, cw, ch);
+
+        drawExpectedCurve();
+        drawBins();
+        drawPegs();
+        balls.forEach(ball => ball.draw(ctx));
+    }
+
+    function drawPegs() {
+        ctx.fillStyle = '#718093';
+        for (let r = 0; r <= ROWS; r++) {
+            for (let c = 0; c <= r; c++) {
+                let pos = getPegPos(r, c);
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, pegRadius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    function drawBins() {
+        // 바닥 선
+        let floorY = ch - 10;
+        ctx.beginPath();
+        ctx.moveTo(0, floorY);
+        ctx.lineTo(cw, floorY);
+        ctx.strokeStyle = '#718093';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        let binWidth = spacingX * 0.8;
+        
+        // 데이터 누적 막대그래프
+        for (let i = 0; i < BINS; i++) {
+            if (binCounts[i] === 0) continue;
+            
+            let pos = getPegPos(ROWS, i);
+            let x = pos.x - binWidth / 2;
+            
+            // 최대 높이에 맞춰 스케일링 (화면 밖으로 나가지 않게)
+            let scale = maxBinCount > 0 ? (binHeight / Math.max(maxBinCount, 20)) : 1;
+            let barHeight = binCounts[i] * scale;
+            
+            // 막대 그리기
+            ctx.fillStyle = '#0fbcf9';
+            ctx.fillRect(x, floorY - barHeight, binWidth, barHeight);
+            
+            // 개수 텍스트
+            if (binCounts[i] > 0) {
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(binCounts[i], pos.x, floorY - barHeight - 5);
+            }
+        }
+    }
+
+    // 팩토리얼 계산 (수학적 기댓값 곡선용)
+    function fact(n) {
+        if (n <= 1) return 1;
+        let res = 1;
+        for (let i = 2; i <= n; i++) res *= i;
+        return res;
+    }
+    function comb(n, k) {
+        return fact(n) / (fact(k) * fact(n - k));
+    }
+
+    // 이론적인 이항분포 곡선(빨간 선) 그리기
+    function drawExpectedCurve() {
+        if (totalDropped === 0) return;
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 94, 87, 0.6)'; // 반투명 빨간색
+        ctx.lineWidth = 3;
+
+        let scale = maxBinCount > 0 ? (binHeight / Math.max(maxBinCount, 20)) : 1;
+
+        for (let k = 0; k <= ROWS; k++) {
+            // 이항분포 확률 공식: P(X=k) = nCk * p^k * (1-p)^(n-k)
+            let prob = comb(ROWS, k) * Math.pow(pRight, k) * Math.pow(1 - pRight, ROWS - k);
+            let expectedCount = prob * totalDropped;
+            
+            let pos = getPegPos(ROWS, k);
+            let x = pos.x;
+            let y = (ch - 10) - (expectedCount * scale);
+
+            if (k === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+
+</script>
+</body>
+</html>
